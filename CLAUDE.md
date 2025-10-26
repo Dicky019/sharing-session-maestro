@@ -12,11 +12,12 @@ This is a React Native project built with Expo, featuring Clerk authentication a
 - **NativeWind** (Tailwind CSS for React Native)
 - **React Native Reusables** (UI component library)
 - **TypeScript** with strict mode enabled
+- **Biome** (linting and formatting)
 
 ## Development Commands
 
 ```bash
-# Start development server with MCP server enabled
+# Start development server (copies .env.development to .env)
 pnpm dev
 
 # Platform-specific launches (after dev server is running)
@@ -24,169 +25,328 @@ pnpm dev
 # Press 'a' for Android emulator
 # Press 'w' for web browser
 
-# Alternative start commands
-pnpm android  # Start with Android
-pnpm ios      # Start with iOS
-pnpm web      # Start with web
+# Alternative platform-specific commands
+pnpm android  # Development build for Android
+pnpm ios      # Development build for iOS
+pnpm web      # Development build for web
 
-# Clean build artifacts and dependencies
-pnpm clean
+# Production builds
+pnpm android:prod  # Android release build
+pnpm ios:prod      # iOS release build
+pnpm web:prod      # Web production build
+
+# App store builds (requires EAS CLI)
+pnpm build:android  # Build for Google Play Store
+pnpm build:ios      # Build for Apple App Store
+
+# Code quality
+pnpm lint           # Run Biome linter
+pnpm lint:fix       # Fix auto-fixable lint issues
+pnpm format         # Format code with Biome
+pnpm format:fix     # Format and apply unsafe fixes
+
+# Cleanup
+pnpm clean  # Remove .expo and node_modules
 ```
 
 ## Environment Setup
 
 Before running the app:
-1. Set up a Clerk account at https://go.clerk.com/blVsQlm
-2. Configure authentication with "Email, phone, username" option
-3. Enable Apple, GitHub, and Google as SSO connections
-4. Copy `.env.example` to `.env.local`
-5. Add your `EXPO_PUBLIC_CLERK_PUBLISHABLE_KEY` from Clerk dashboard
+
+1. **Set up Clerk account** at https://go.clerk.com/blVsQlm
+2. Configure authentication with **"Email, phone, username"** option
+3. Enable **Apple, GitHub, and Google** as SSO connections
+4. Get your Clerk publishable keys from https://go.clerk.com/u8KAui7
+
+**Environment Files:**
+- `.env.development` - Development Clerk key (`pk_test_...`)
+- `.env.production` - Production Clerk key (`pk_live_...`)
+- `.env.example` - Template showing required variables
+
+The `pnpm dev` command automatically copies `.env.development` to `.env` before starting the server.
+
+**Important:** Never commit `.env` files. They are gitignored.
 
 ## Testing Authentication (Development Mode)
 
-Clerk provides special test credentials for development that bypass actual email/SMS delivery:
+Clerk provides special test credentials that bypass actual email/SMS delivery:
 
 ### Test Email Addresses
-Use any email with the `+clerk_test` subaddress format:
+- Format: `[name]+clerk_test@example.com`
 - Example: `john+clerk_test@example.com`
-- **Verification Code**: Always use `424242`
-- No actual email is sent; the code works instantly
+- **Verification Code**: Always `424242`
+- No actual email is sent
 
 ### Test Phone Numbers
-Use fictional numbers following the North American format:
 - Pattern: `+1 (XXX) 555-0100` to `+1 (XXX) 555-0199`
 - Example: `+1 (201) 555-0123`
-- **Verification Code**: Always use `424242`
+- **Verification Code**: Always `424242`
 - No actual SMS is sent
 
-### Debugging Sign-Up Flow
-The sign-up components include comprehensive logging with `[SignUp]` and `[VerifyEmail]` prefixes:
-- Check console for step-by-step progress
-- Test email detection automatically logs expected code `424242`
-- Full error details are logged for troubleshooting
-
-**Quick Test:**
+### Quick Test Flow
 1. Sign up with `test+clerk_test@example.com`
-2. Use any password (min 8 characters)
+2. Use any password (minimum 8 characters)
 3. Enter verification code: `424242`
-4. Check console logs for detailed flow information
+4. Check console logs (prefixed with `[SignUp]` or `[VerifyEmail]`) for detailed flow information
 
 ## Project Architecture
 
 ### File-Based Routing (Expo Router)
 
-The routing structure uses Expo Router's file-based system:
+The routing structure uses Expo Router's file-based system with authentication guards:
 
-- **`app/_layout.tsx`**: Root layout with ClerkProvider, ThemeProvider, and protected route logic
-  - Uses `Stack.Protected` with guards to control access based on `isSignedIn` state
-  - Screens under `guard={!isSignedIn}` are auth-only (sign-in, sign-up, etc.)
-  - Screens under `guard={isSignedIn}` require authentication (main app screens)
+**`app/_layout.tsx`** - Root layout with providers and protected route logic:
+- Wraps app in `ClerkProvider`, `ThemeProvider`, `GestureHandlerRootView`
+- Uses `Stack.Protected` with guards based on `isSignedIn` state
+- Screens under `guard={!isSignedIn}` are auth-only (sign-in, sign-up)
+- Screens under `guard={isSignedIn}` require authentication
+- Suppresses iOS Simulator warnings in development mode
 
-- **`app/index.tsx`**: Main authenticated home screen
+**Route Structure:**
+```
+app/
+├── _layout.tsx              # Root layout with auth guards
+├── index.tsx                # Main authenticated home screen
+├── (auth)/                  # Auth flow screens (unprotected)
+│   ├── sign-in.tsx
+│   ├── sign-up/
+│   │   ├── _layout.tsx
+│   │   ├── index.tsx
+│   │   └── verify-email.tsx
+│   ├── forgot-password.tsx
+│   └── reset-password.tsx
+├── +html.tsx                # Web-specific HTML wrapper
+└── +not-found.tsx           # 404 page
+```
 
-- **`app/(auth)/*`**: Authentication flow screens
-  - `sign-in.tsx`: Sign in with email/password or OAuth
-  - `sign-up/index.tsx`: Sign up form
-  - `sign-up/verify-email.tsx`: Email verification step
-  - `forgot-password.tsx`: Password reset request
-  - `reset-password.tsx`: Password reset form
-
-### Component Structure
+### Component Architecture
 
 **UI Components** (`components/ui/`):
-- Primitive components based on React Native Reusables
-- Styled with NativeWind (Tailwind classes)
-- Include: Button, Input, Card, Avatar, Label, Icon, Text, Separator, Popover
+- Primitive components based on **React Native Reusables**
+- Styled exclusively with **NativeWind** (Tailwind classes)
+- Examples: Button, Input, Card, Avatar, Label, Icon, Text, Separator, Popover
+- All support dark mode via theme CSS variables
 
 **Feature Components** (`components/`):
-- `sign-in-form.tsx`, `sign-up-form.tsx`: Auth forms
-- `forgot-password-form.tsx`, `reset-password-form.tsx`: Password recovery
-- `verify-email-form.tsx`: Email verification UI
-- `social-connections.tsx`: OAuth buttons for Apple/GitHub/Google
-- `user-menu.tsx`: User profile dropdown
-- `theme-toggle.tsx`: Light/dark mode switcher
+- `sign-in-form.tsx`, `sign-up-form.tsx` - Auth forms
+- `forgot-password-form.tsx`, `reset-password-form.tsx` - Password recovery
+- `verify-email-form.tsx` - Email verification UI
+- `social-connections.tsx` - OAuth buttons for Apple/GitHub/Google
+- `user-menu.tsx` - User profile dropdown with sign-out
+- `theme-toggle.tsx` - Light/dark mode switcher
 
 ### Path Aliases
 
-The project uses TypeScript path aliases (configured in `tsconfig.json`):
+Configured in `tsconfig.json`:
 ```typescript
 "@/*" -> Project root
 ```
 
-Examples:
-- `@/components/ui/button` → `components/ui/button.tsx`
-- `@/lib/utils` → `lib/utils.ts`
-- `@/assets/images/logo.png` → `assets/images/logo.png`
+**Always use path aliases for imports:**
+```typescript
+// Correct
+import { Button } from '@/components/ui/button';
+import { cn } from '@/lib/utils';
+import { LOGO } from '@/lib/constants';
+
+// Avoid
+import { Button } from '../../components/ui/button';
+```
 
 ### Theming System
 
 **Theme Definition** (`lib/theme.ts`):
-- `THEME` object contains HSL color definitions for light/dark modes
-- `NAV_THEME` adapts theme for React Navigation
-- Colors follow a design token system (background, foreground, primary, secondary, muted, accent, destructive, border, input, ring)
+- `THEME` - HSL color definitions for light/dark modes
+- `NAV_THEME` - Adapted theme for React Navigation
+- Design tokens: `background`, `foreground`, `primary`, `secondary`, `muted`, `accent`, `destructive`, `border`, `input`, `ring`
 
-**Theme Usage**:
-- NativeWind's `useColorScheme()` hook for getting current theme
-- `className` prop with Tailwind classes (e.g., `className="bg-background text-foreground"`)
-- Theme colors are CSS variables that automatically switch with color scheme
+**Theme Usage:**
+```typescript
+import { useColorScheme } from 'nativewind';
 
-### Shared Constants
+const { colorScheme } = useColorScheme(); // 'light' | 'dark'
+```
 
-**`lib/constants.tsx`**: Centralized constants for reusability
-- Image assets (logos for light/dark modes)
-- Common styles (e.g., `LOGO_STYLE`)
-- Screen options for consistent header configurations
+**Styling Rules:**
+- Use theme CSS variables via Tailwind classes: `className="bg-background text-foreground"`
+- Dark mode is automatic via CSS variables
+- Platform-specific styles: `ios:`, `android:`, `web:` prefixes
+- Responsive styles: Use NativeWind's responsive prefixes
+
+**Never use hardcoded colors:**
+```typescript
+// Wrong
+className="bg-blue-500"
+
+// Correct
+className="bg-primary"
+```
+
+### Shared Utilities
+
+**`lib/constants.ts`** - Centralized constants:
+- `LOGO` - App logo (adapts to theme)
+- `CLERK_LOGO` - Clerk branding
+- `LOGO_STYLE` - Reusable style object
+
+**`lib/utils.ts`** - Utility functions:
+- `cn()` - Tailwind class merging with `clsx` and `tailwind-merge`
+
+**`lib/oauth-utils.ts`** - OAuth flow helpers:
+- `generateUsername()` - Creates unique username from email/firstName
+- `handleSignUp()` - Handles OAuth sign-up with automatic username generation
 
 ### Clerk Authentication Flow
 
 1. **Initial Load**: `_layout.tsx` checks `isSignedIn` from `useAuth()`
-2. **Protected Routes**: `Stack.Protected` components guard routes
-3. **Token Caching**: Uses `tokenCache` from `@clerk/clerk-expo/token-cache`
-4. **Session Management**: Clerk handles token refresh automatically
-5. **Sign Out**: Available through `UserMenu` component
-
-### Styling Approach
-
-- **NativeWind 4.x**: Use Tailwind utility classes in `className` prop
-- **Global Styles**: Defined in `global.css` with CSS variables for theme tokens
-- **Responsive**: Use NativeWind's responsive prefixes (e.g., `web:mx-2`)
-- **Platform-specific**: Use `ios:` and `android:` prefixes when needed
-- **Dark Mode**: Automatically handled via CSS variables, no need for conditional styles
+2. **Splash Screen**: Hidden once `isLoaded` is true
+3. **Protected Routes**: `Stack.Protected` guards routes based on auth state
+4. **Token Caching**: Automatic via `@clerk/clerk-expo/token-cache`
+5. **OAuth Handling**: `oauth-utils.ts` manages username generation for social sign-ins
+6. **Session Management**: Clerk handles token refresh automatically
+7. **Sign Out**: Available through `UserMenu` component
 
 ## Code Style Guidelines
 
-- **TypeScript**: Strict mode enabled, always type props and component return types
-- **Formatting**: Prettier configured with Tailwind plugin for class sorting
-- **Component Exports**: Use default exports for screens, named exports for reusable components
-- **Imports**: Group by external dependencies, then internal with path aliases
-- **File Naming**:
-  - kebab-case for component files (e.g., `user-menu.tsx`)
-  - PascalCase for component names (e.g., `UserMenu`)
+### TypeScript Rules
+- **Strict mode enabled** - Always type props and component return types
+- Prefer `interface` for React component props
+- Use `type` for unions, intersections, and utility types
+
+### File & Component Naming
+- **Files**: kebab-case (e.g., `user-menu.tsx`)
+- **Components**: PascalCase (e.g., `UserMenu`)
+- **Screens**: Default exports
+- **Reusable components**: Named exports
+
+### Import Organization
+```typescript
+// 1. External dependencies
+import { View } from 'react-native';
+import { useAuth } from '@clerk/clerk-expo';
+
+// 2. Internal imports with path aliases
+import { Button } from '@/components/ui/button';
+import { cn } from '@/lib/utils';
+```
+
+### Biome Configuration
+
+The project uses **Biome** (not Prettier) for linting and formatting:
+
+**Key Rules:**
+- Line width: 100 characters
+- Indentation: 2 spaces
+- Quotes: Single quotes for JS/TS, double quotes for JSX
+- Trailing commas: ES5 style
+- **Sorted Tailwind classes** (enforced error-level)
+- Auto-organize imports on save
+
+**Disabled Rules:**
+- `noForEach`, `noUselessFragments` - Allow forEach and fragments
+- `useExhaustiveDependencies` - Relaxed hook dependency checks
+- `noExplicitAny` - Allow explicit `any` when needed
+
+Run `pnpm lint` before committing.
 
 ## Common Patterns
 
-**Creating a New Screen:**
-1. Add file to `app/` directory (or subdirectory for grouping)
-2. Export default function component
-3. Add `<Stack.Screen />` to `_layout.tsx` if custom options needed
-4. Protected screens go inside appropriate `Stack.Protected` block
+### Creating a New Screen
 
-**Adding a New UI Component:**
+1. Add file to `app/` directory (or subdirectory for route groups)
+2. Export default function component
+3. Add `<Stack.Screen />` configuration to `app/_layout.tsx` if needed
+4. Place inside appropriate `Stack.Protected` block based on auth requirements
+
+Example:
+```typescript
+// app/profile.tsx
+export default function ProfileScreen() {
+  return <View>...</View>;
+}
+
+// app/_layout.tsx - Add to protected section
+<Stack.Protected guard={isSignedIn}>
+  <Stack.Screen name="index" />
+  <Stack.Screen name="profile" options={{ title: 'Profile' }} />
+</Stack.Protected>
+```
+
+### Adding a New UI Component
+
 1. Create in `components/ui/` following React Native Reusables patterns
 2. Use NativeWind for styling with Tailwind classes
-3. Support dark mode via theme CSS variables
+3. Support dark mode via theme CSS variables (no conditional logic needed)
 4. Export component with named export
+5. Type all props with TypeScript
 
-**Working with Forms:**
-- Form components typically manage their own state
-- Use Clerk's hooks (`useSignIn`, `useSignUp`, etc.) for auth operations
+Example:
+```typescript
+import { Text } from 'react-native';
+import { cn } from '@/lib/utils';
+
+interface BadgeProps {
+  children: React.ReactNode;
+  variant?: 'default' | 'destructive';
+}
+
+export function Badge({ children, variant = 'default' }: BadgeProps) {
+  return (
+    <Text className={cn(
+      'bg-primary text-primary-foreground',
+      variant === 'destructive' && 'bg-destructive text-destructive-foreground'
+    )}>
+      {children}
+    </Text>
+  );
+}
+```
+
+### Working with Forms
+
+- Form components manage their own state with `useState`
+- Use Clerk hooks for auth operations:
+  - `useSignIn()` - Sign in flows
+  - `useSignUp()` - Sign up flows
+  - `useUser()` - Current user data
+  - `useAuth()` - Auth state and session
 - Handle errors with Clerk's error types
 - Display loading states during async operations
 
+### OAuth Integration
+
+When adding OAuth flows, use `lib/oauth-utils.ts`:
+
+```typescript
+import { handleSignUp } from '@/lib/oauth-utils';
+
+const { signUp } = useSignUp();
+const { setActive } = useSessionList();
+
+const success = await handleSignUp(signUp, setActive);
+```
+
+This handles:
+- Automatic username generation from email/firstName
+- Missing field completion
+- Session activation
+
 ## Important Notes
 
-- The project uses Expo's New Architecture and Edge-to-Edge mode
-- MCP Server is enabled via `EXPO_UNSTABLE_MCP_SERVER=1` environment variable
-- Package manager is pnpm (see `.npmrc`)
-- React Native Reanimated and Worklets are included for animations
-- Safe area handling via `react-native-safe-area-context`
+- **New Architecture**: Expo's React Native New Architecture is enabled
+- **Edge-to-Edge**: UI extends to screen edges (use safe area insets)
+- **Package Manager**: pnpm (see `.npmrc` - strict peer dependencies disabled)
+- **Animations**: React Native Reanimated and Worklets included
+- **Safe Areas**: Use `react-native-safe-area-context` for proper insets
+- **Toasts**: Sonner Native configured at bottom-center with close button
+- **Platform Suppression**: iOS Simulator warnings are suppressed in development (`LogBox.ignoreLogs`)
+
+## Active Technologies
+- TypeScript 5.9.2 (strict mode) with React Native 0.81.5 and React 19.1.0 + Expo SDK 54, Expo Router 6, React Native Reusables, NativeWind 4, Clerk (existing auth), @react-native-community/datetimepicker (001-todo-list-status)
+- In-memory storage (dummy data in API routes) - no database persistence for Phase 1 (001-todo-list-status)
+- TypeScript 5.x with strict mode enabled (React Native + Expo SDK 52+) (001-todo-list-status)
+- In-memory Map (user-keyed) for MVP, with clear migration path to AsyncStorage or SQLite (001-todo-list-status)
+- AsyncStorage (user-keyed by Clerk userId) for persistent local storage across logout/login cycles (001-todo-list-status)
+
+## Recent Changes
+- 001-todo-list-status: Added TypeScript 5.9.2 (strict mode) with React Native 0.81.5 and React 19.1.0 + Expo SDK 54, Expo Router 6, React Native Reusables, NativeWind 4, Clerk (existing auth), @react-native-community/datetimepicker

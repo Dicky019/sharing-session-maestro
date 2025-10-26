@@ -1,0 +1,19 @@
+# Maestro Test Configuration
+# Feature: Todo List with Status Management
+
+# Include test flows from feature directories
+flows:
+  - todos/*.yaml
+  # Exclude common utilities from test runs (they are reusable subflows)
+  - "!common/*.yaml"
+
+# Tag-based execution
+# Use --includeTags or --excludeTags to run specific test subsets
+
+# Examples:
+# maestro test .maestro/flows/ --includeTags smokeTest  # Run only smoke tests
+# maestro test .maestro/flows/ --excludeTags slow       # Skip slow tests
+# maestro test .maestro/flows/ --includeTags todos      # Run only todo feature tests
+
+excludeTags:
+  - util  # Exclude utility flows (not executable tests)

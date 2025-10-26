@@ -1,0 +1,85 @@
+appId: ${APP_ID}
+tags:
+  - validation
+---
+# Test: Validate Missing Required Fields
+#
+# RED PHASE: This test should FAIL until form validation is implemented
+#
+# Test Steps:
+# 1. Authenticate user
+# 2. Open create todo form
+# 3. Attempt to submit with empty fields
+# 4. Verify all required field validation errors appear
+# 5. Fill fields one by one and verify errors clear
+# 6. Verify form can be submitted once all fields are valid
+
+- runFlow: ../common/setup-auth.yaml
+
+# Ensure we're on Active tab
+- tapOn: "Active"
+
+# Open create todo form
+- tapOn:
+    id: "create-todo-button"
+
+# Attempt to submit with all fields empty
+- tapOn:
+    id: "create-todo-submit"
+
+# Verify validation errors appear for all required fields
+- assertVisible: "Title is required"
+- assertVisible: "Description is required"
+- assertVisible: "Icon is required"
+- assertVisible: "Due date is required"
+
+# Fill title and verify error clears
+- tapOn:
+    id: "todo-title-input"
+- inputText: "Valid title"
+- assertNotVisible: "Title is required"
+
+# Fill description and verify error clears
+- tapOn:
+    id: "todo-description-input"
+- inputText: "Valid description"
+- assertNotVisible: "Description is required"
+
+# Select icon and verify error clears
+- tapOn:
+    id: "todo-icon-picker"
+- tapOn: "CheckSquare"
+- assertNotVisible: "Icon is required"
+
+# Set due date and verify error clears
+- tapOn:
+    id: "todo-due-date-picker"
+- tapOn: "Tomorrow"
+- tapOn: "Confirm"
+- assertNotVisible: "Due date is required"
+
+# Now submit should succeed
+- tapOn:
+    id: "create-todo-submit"
+
+# Verify success
+- assertVisible: "Todo created successfully"
+
+# Test title length validation (max 100 characters)
+- tapOn:
+    id: "create-todo-button"
+- tapOn:
+    id: "todo-title-input"
+- inputText: "This is a very long title that exceeds one hundred characters and should trigger a validation error message"
+- tapOn:
+    id: "todo-description-input"
+- assertVisible: "Title must be 100 characters or less"
+
+# Test description length validation (max 500 characters)
+- tapOn:
+    id: "todo-description-input"
+- eraseText
+- inputText: "Lorem ipsum dolor sit amet, consectetur adipiscing elit. Sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat. Duis aute irure dolor in reprehenderit in voluptate velit esse cillum dolore eu fugiat nulla pariatur. Excepteur sint occaecat cupidatat non proident, sunt in culpa qui officia deserunt mollit anim id est laborum. Sed ut perspiciatis unde omnis iste natus error sit voluptatem accusantium doloremque laudantium totam rem aperiam eaque ipsa quae ab illo inventore"
+- tapOn:
+    id: "todo-title-input"
+- assertVisible: "Description must be 500 characters or less"

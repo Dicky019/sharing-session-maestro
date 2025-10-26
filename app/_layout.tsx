@@ -4,6 +4,8 @@ import { ClerkProvider, useAuth } from '@clerk/clerk-expo';
 import { tokenCache } from '@clerk/clerk-expo/token-cache';
 import { ThemeProvider } from '@react-navigation/native';
 import { PortalHost } from '@rn-primitives/portal';
+import { ConvexReactClient } from 'convex/react';
+import { ConvexProviderWithClerk } from 'convex/react-clerk';
 import { Stack } from 'expo-router';
 import * as SplashScreen from 'expo-splash-screen';
 import { StatusBar } from 'expo-status-bar';
@@ -13,6 +15,11 @@ import { LogBox, Platform } from 'react-native';
 import { GestureHandlerRootView } from 'react-native-gesture-handler';
 import { Toaster } from 'sonner-native';
 import { NAV_THEME } from '@/lib/theme';
+
+// Initialize Convex client
+const convex = new ConvexReactClient(process.env.EXPO_PUBLIC_CONVEX_URL ?? '', {
+  unsavedChangesWarning: false,
+});
 
 // Suppress iOS Simulator warnings that don't affect functionality
 if (__DEV__ && Platform.OS === 'ios') {
@@ -36,13 +43,17 @@ export default function RootLayout() {
 
   return (
     <GestureHandlerRootView>
-      <ClerkProvider tokenCache={tokenCache}>
-        <ThemeProvider value={NAV_THEME[colorScheme ?? 'light']}>
-          <StatusBar style={colorScheme === 'dark' ? 'light' : 'dark'} />
-          <Routes />
-          <PortalHost />
-          <Toaster position="bottom-center" closeButton />
-        </ThemeProvider>
+      <ClerkProvider
+        publishableKey={process.env.EXPO_PUBLIC_CLERK_PUBLISHABLE_KEY}
+        tokenCache={tokenCache}>
+        <ConvexProviderWithClerk client={convex} useAuth={useAuth}>
+          <ThemeProvider value={NAV_THEME[colorScheme ?? 'light']}>
+            <StatusBar style={colorScheme === 'dark' ? 'light' : 'dark'} />
+            <Routes />
+            <PortalHost />
+            <Toaster position="bottom-center" closeButton />
+          </ThemeProvider>
+        </ConvexProviderWithClerk>
       </ClerkProvider>
     </GestureHandlerRootView>
   );
@@ -76,6 +87,7 @@ function Routes() {
       {/* Screens only shown when the user IS signed in */}
       <Stack.Protected guard={isSignedIn}>
         <Stack.Screen name="index" />
+        <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
       </Stack.Protected>
 
       {/* Screens outside the guards are accessible to everyone (e.g. not found) */}
@@ -89,11 +101,9 @@ const SIGN_IN_SCREEN_OPTIONS = {
 };
 
 const SIGN_UP_SCREEN_OPTIONS = {
-  presentation: 'modal',
-  title: '',
-  headerTransparent: true,
-  gestureEnabled: false,
-} as const;
+  headerShown: false,
+  title: 'Sign up',
+};
 
 const DEFAULT_AUTH_SCREEN_OPTIONS = {
   title: '',

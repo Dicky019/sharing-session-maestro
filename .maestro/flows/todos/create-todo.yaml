@@ -1,0 +1,65 @@
+appId: ${APP_ID}
+tags:
+  - smokeTest
+---
+# Test: Create Todo with All Required Fields
+#
+# RED PHASE: This test should FAIL until create todo functionality is implemented
+#
+# Test Steps:
+# 1. Authenticate user
+# 2. Navigate to Active tab
+# 3. Open create todo form
+# 4. Fill all required fields (title, description, icon, dueDate)
+# 5. Submit form
+# 6. Verify todo appears in Active tab with correct data
+
+- runFlow: ../common/setup-auth.yaml
+
+# Ensure we're on Active tab
+- tapOn: "Active"
+
+# Open create todo form (via FAB or header button)
+- tapOn:
+    id: "create-todo-button"
+
+# Fill in title
+- tapOn:
+    id: "todo-title-input"
+- inputText: "Buy groceries"
+
+# Fill in description
+- tapOn:
+    id: "todo-description-input"
+- inputText: "Get milk, eggs, bread, and vegetables for the week"
+
+# Select icon (ShoppingCart from the icon picker)
+- tapOn:
+    id: "todo-icon-picker"
+- tapOn: "ShoppingCart"
+
+# Set due date (use date picker)
+- tapOn:
+    id: "todo-due-date-picker"
+# Select tomorrow's date (assumes date picker opens)
+- tapOn:
+    text: "Tomorrow"
+- tapOn: "Confirm"
+
+# Submit the form
+- tapOn:
+    id: "create-todo-submit"
+
+# Verify success message or navigation back to list
+- assertVisible: "Todo created successfully"
+
+# Verify the todo appears in the Active tab
+- assertVisible: "Buy groceries"
+- assertVisible: "Get milk, eggs, bread, and vegetables for the week"
+
+# Verify it shows the shopping cart icon (text representation or icon)
+- assertVisible:
+    id: "todo-icon-ShoppingCart"
+
+# Verify status badge shows Active
+- assertVisible: "Active"

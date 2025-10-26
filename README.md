@@ -1,244 +1,315 @@
 # Sharing Session Maestro
 
-This is a [React Native](https://reactnative.dev) project built with [Expo](https://expo.dev), [Clerk](https://go.clerk.com/gjgxNgT), and [React Native Reusables](https://reactnativereusables.com).
+A modern React Native starter template built with Expo, featuring complete authentication flows and cross-platform support.
 
-It was initialized using the following command:
+Built with [Expo](https://expo.dev), [Clerk](https://go.clerk.com/gjgxNgT), and [React Native Reusables](https://reactnativereusables.com).
 
-```bash
-npx @react-native-reusables/cli@latest init -t sharing-session-maestro
-```
+## ✨ Features
 
-## Getting Started
+- ⚛️ **Expo Router** - File-based routing for iOS, Android, and Web
+- 🔐 **Clerk Authentication** - Complete auth flows with OAuth support
+- 🎨 **NativeWind** - Tailwind CSS styling for React Native
+- 📦 **React Native Reusables** - Production-ready UI components
+- 🌓 **Dark Mode** - Automatic theme switching with system preference
+- 🚀 **New Architecture** - React Native's latest architecture enabled
+- 🎯 **TypeScript** - Strict mode for type safety
+- 🔧 **Biome** - Fast linting and formatting
+- 🔒 **Protected Routes** - Authentication guards with Stack.Protected
 
-### Prerequisites
+## 📋 Prerequisites
 
-Before running the app, make sure to:
+Before you begin, ensure you have:
 
-1. [Set up your Clerk account](https://go.clerk.com/blVsQlm)
-2. In the instance setup, leave the default option selected: **Email, phone, username**
-3. Enable Apple, GitHub, and Google as sign-in options under SSO Connections
-4. Get your Clerk publishable keys:
-   - Development key from [your API keys](https://go.clerk.com/u8KAui7)
-   - Production key (create a separate Clerk instance for production)
+- **Node.js** 18+ installed
+- **pnpm** package manager (`npm install -g pnpm`)
+- **Expo CLI** (`npm install -g expo-cli`)
+- **iOS Simulator** (Mac only) or **Android Emulator**
 
-### Environment Setup
+## 🚀 Quick Start
 
-This project uses separate environment files for development and production:
-
-**For Development:**
-1. Update `.env.development` with your development Clerk key:
-   ```
-   EXPO_PUBLIC_CLERK_PUBLISHABLE_KEY=pk_test_your_dev_key
-   ```
-
-**For Production:**
-1. Update `.env.production` with your production Clerk key:
-   ```
-   EXPO_PUBLIC_CLERK_PUBLISHABLE_KEY=pk_live_your_prod_key
-   ```
-
-### Installation
+### 1. Clone and Install
 
 ```bash
+# Clone the repository
+git clone <your-repo-url>
+cd sharing-session-maestro
+
 # Install dependencies
 pnpm install
-
-# or
-npm install
-# or
-yarn install
 ```
 
-## Development
+### 2. Set Up Clerk Authentication
 
-### Start Development Server
+1. Create a Clerk account at [clerk.com](https://go.clerk.com/blVsQlm)
+2. Create a new application
+3. Configure authentication:
+   - Enable **"Email, phone, username"** option
+   - Add OAuth providers: **Apple**, **GitHub**, **Google**
+4. Get your publishable keys from the [API Keys page](https://go.clerk.com/u8KAui7)
+
+### 3. Configure Environment Variables
+
+Create your environment files:
+
+**`.env.development`** (for local development):
+```bash
+EXPO_PUBLIC_CLERK_PUBLISHABLE_KEY=pk_test_your_dev_key_here
+```
+
+**`.env.production`** (for production builds):
+```bash
+EXPO_PUBLIC_CLERK_PUBLISHABLE_KEY=pk_live_your_prod_key_here
+```
+
+> **Note:** The `.env.development` file is automatically copied to `.env` when you run `pnpm dev`
+
+### 4. Start Development Server
 
 ```bash
 pnpm dev
 ```
 
-This will:
-- Copy `.env.development` to `.env`
-- Launch the Expo development server
+Then launch your preferred platform:
+- Press **`i`** for iOS Simulator (Mac only)
+- Press **`a`** for Android Emulator
+- Press **`w`** for Web Browser
 
-You can then open the app with:
-- **iOS**: press `i` to launch in the iOS simulator (Mac only)
-- **Android**: press `a` to launch in the Android emulator
-- **Web**: press `w` to run in a browser
+Or scan the QR code with [Expo Go](https://expo.dev/go) on your physical device.
 
-Or scan the QR code with the [Expo Go](https://expo.dev/go) app to test on your device.
+## 🧪 Testing Authentication
 
-### Platform-Specific Development
+Clerk provides special test credentials for development that bypass actual email/SMS delivery:
 
-```bash
-# Run on Android (development)
-pnpm android
-
-# Run on iOS (development)
-pnpm ios
-
-# Run on Web (development)
-pnpm web
+### Test Email Addresses
+Use any email with `+clerk_test` suffix:
 ```
-
-## Production
-
-### Testing Production Build Locally
-
-```bash
-# Test production mode in development server
-pnpm dev:prod
-
-# Run production builds on specific platforms
-pnpm android:prod  # Android release build
-pnpm ios:prod      # iOS release build
-pnpm web:prod      # Web production build
+john+clerk_test@example.com
 ```
+**Verification Code:** `424242`
 
-### Building for App Stores
-
-```bash
-# Build for Android (requires EAS CLI)
-pnpm build:android
-
-# Build for iOS (requires EAS CLI)
-pnpm build:ios
+### Test Phone Numbers
+Use North American format with 555 prefix:
 ```
++1 (201) 555-0123
+```
+**Verification Code:** `424242`
 
-**Note:** Building for app stores requires [Expo Application Services (EAS)](https://docs.expo.dev/build/introduction/). Make sure to:
-1. Install EAS CLI: `npm install -g eas-cli`
-2. Login: `eas login`
-3. Configure your project: `eas build:configure`
+### Quick Test Flow
+1. Sign up with `test+clerk_test@example.com`
+2. Use any password (minimum 8 characters)
+3. Enter code `424242` when prompted
+4. Check console for detailed logs (prefixed with `[SignUp]` or `[VerifyEmail]`)
 
-## Project Structure
+## 📱 Available Commands
+
+### Development
+
+| Command | Description |
+|---------|-------------|
+| `pnpm dev` | Start development server (copies .env.development) |
+| `pnpm android` | Run on Android in development mode |
+| `pnpm ios` | Run on iOS in development mode |
+| `pnpm web` | Run web app in development mode |
+
+### Production Builds
+
+| Command | Description |
+|---------|-------------|
+| `pnpm android:prod` | Build and run Android release |
+| `pnpm ios:prod` | Build and run iOS release |
+| `pnpm web:prod` | Run web with production env |
+| `pnpm build:android` | Build for Google Play Store (requires EAS) |
+| `pnpm build:ios` | Build for Apple App Store (requires EAS) |
+
+### Code Quality
+
+| Command | Description |
+|---------|-------------|
+| `pnpm lint` | Check code with Biome |
+| `pnpm lint:fix` | Fix auto-fixable lint issues |
+| `pnpm format` | Format code with Biome |
+| `pnpm format:fix` | Format and apply unsafe fixes |
+
+### Utilities
+
+| Command | Description |
+|---------|-------------|
+| `pnpm clean` | Remove .expo and node_modules |
+
+## 📁 Project Structure
 
 ```
 sharing-session-maestro/
-├── app/                      # Expo Router pages
-│   ├── (auth)/              # Authentication screens
+├── app/                       # Expo Router (file-based routing)
+│   ├── _layout.tsx           # Root layout with auth guards
+│   ├── index.tsx             # Home screen (protected)
+│   ├── (auth)/               # Authentication screens
 │   │   ├── sign-in.tsx
 │   │   ├── sign-up/
+│   │   │   ├── _layout.tsx
+│   │   │   ├── index.tsx
+│   │   │   └── verify-email.tsx
 │   │   ├── forgot-password.tsx
 │   │   └── reset-password.tsx
-│   ├── _layout.tsx          # Root layout with providers
-│   ├── index.tsx            # Main authenticated screen
-│   └── constants.tsx        # Shared constants
-├── components/              # React components
-│   ├── ui/                  # Reusable UI components
-│   ├── sign-in-form.tsx
-│   ├── sign-up-form.tsx
-│   ├── user-menu.tsx
-│   ├── theme-toggle.tsx
-│   └── ...
-├── lib/                     # Utilities and configurations
-│   ├── utils.ts             # Helper functions
-│   ├── theme.ts             # Theme configuration
-│   └── constants.tsx        # App-wide constants
-├── assets/                  # Images, fonts, etc.
-├── .env.development         # Development environment variables
-├── .env.production          # Production environment variables
-└── .env.example             # Environment template
+│   ├── +html.tsx             # Web HTML wrapper
+│   └── +not-found.tsx        # 404 page
+│
+├── components/
+│   ├── ui/                   # Reusable UI primitives
+│   │   ├── button.tsx
+│   │   ├── input.tsx
+│   │   ├── card.tsx
+│   │   └── ...
+│   ├── sign-in-form.tsx      # Sign in form
+│   ├── sign-up-form.tsx      # Sign up form
+│   ├── verify-email-form.tsx # Email verification
+│   ├── social-connections.tsx # OAuth buttons
+│   ├── user-menu.tsx         # User profile dropdown
+│   └── theme-toggle.tsx      # Dark/light mode toggle
+│
+├── lib/
+│   ├── constants.ts          # App-wide constants
+│   ├── theme.ts              # Theme configuration
+│   ├── utils.ts              # Utility functions (cn, etc.)
+│   └── oauth-utils.ts        # OAuth flow helpers
+│
+├── assets/                   # Images, fonts, etc.
+├── .env.development          # Development environment vars
+├── .env.production           # Production environment vars
+├── .env.example              # Environment template
+├── global.css                # Global styles & CSS variables
+├── tailwind.config.js        # Tailwind configuration
+└── biome.json                # Biome linter/formatter config
 ```
 
-## Available Scripts
+## 🎨 Styling Guide
 
-| Script | Description |
-|--------|-------------|
-| `pnpm dev` | Start development server with development env |
-| `pnpm dev:prod` | Start server with production env (for testing) |
-| `pnpm android` | Run Android app in development mode |
-| `pnpm android:prod` | Build and run Android release |
-| `pnpm ios` | Run iOS app in development mode |
-| `pnpm ios:prod` | Build and run iOS release |
-| `pnpm web` | Run web app in development mode |
-| `pnpm web:prod` | Run web app with production env |
-| `pnpm build:android` | Build Android app for Play Store |
-| `pnpm build:ios` | Build iOS app for App Store |
-| `pnpm clean` | Remove build artifacts and node_modules |
+### Path Aliases
 
-## Included Screens and Features
-
-- Protected routes using Clerk authentication
-- Sign in screen with email/password
-- OAuth with Apple, GitHub, and Google
-- Sign up flow with email verification
-- Forgot password screen
-- Reset password screen
-- User profile menu with sign out
-- Light/Dark theme toggle
-- Responsive design for mobile and web
-
-## Project Features
-
-- ⚛️ Built with [Expo Router](https://expo.dev/router) (file-based routing)
-- 🔐 Authentication powered by [Clerk](https://go.clerk.com/Q1MKAz0)
-- 🎨 Styled with [Tailwind CSS](https://tailwindcss.com/) via [NativeWind](https://www.nativewind.dev/)
-- 📦 UI powered by [React Native Reusables](https://github.com/founded-labs/react-native-reusables)
-- 🚀 React Native New Architecture enabled
-- 🔥 Edge to Edge enabled
-- 📱 Runs on iOS, Android, and Web
-- 🌓 Dark mode support
-- 🔒 Protected routes with authentication guards
-- 🎯 TypeScript with strict mode
-- 💅 Prettier for code formatting
-
-## Environment Variables
-
-This project uses environment-specific configuration:
-
-### `.env.development`
-Used for local development and testing. Contains development Clerk keys and API endpoints.
-
-### `.env.production`
-Used for production builds and deployments. Contains production Clerk keys and API endpoints.
-
-### `.env.example`
-Template file showing required environment variables.
-
-**Important:** Never commit `.env` file. The build scripts automatically copy the appropriate environment file (`.env.development` or `.env.production`) to `.env` before running.
-
-## Path Aliases
-
-The project uses TypeScript path aliases for cleaner imports:
+Use the `@/` alias for cleaner imports:
 
 ```typescript
-import { Button } from '@/components/ui/button'
-import { cn } from '@/lib/utils'
-import { LOGO } from '@/lib/constants'
+// ✅ Correct
+import { Button } from '@/components/ui/button';
+import { cn } from '@/lib/utils';
+import { LOGO } from '@/lib/constants';
+
+// ❌ Avoid
+import { Button } from '../../components/ui/button';
 ```
 
-Configuration is in `tsconfig.json`:
-```json
-{
-  "compilerOptions": {
-    "paths": {
-      "@/*": ["*"]
-    }
-  }
-}
+### Theming
+
+The app uses CSS variables for consistent theming:
+
+```typescript
+// ✅ Use theme variables
+className="bg-background text-foreground"
+className="bg-primary text-primary-foreground"
+
+// ❌ Don't use hardcoded colors
+className="bg-blue-500 text-white"
 ```
 
-## Theming
+Theme is configured in `lib/theme.ts` with automatic dark mode support.
 
-The app supports light and dark modes:
-- Theme configuration is in `lib/theme.ts`
-- Uses CSS variables for theme tokens
-- Automatically adapts to system preference
-- Manual toggle available via `ThemeToggle` component
+### Platform-Specific Styles
 
-## Learn More
+Use NativeWind's platform prefixes when needed:
 
-- [Clerk Docs](https://go.clerk.com/Q1MKAz0)
-- [React Native Docs](https://reactnative.dev/docs/getting-started)
-- [Expo Docs](https://docs.expo.dev/)
-- [Expo Router Docs](https://expo.dev/router)
-- [NativeWind Docs](https://www.nativewind.dev/)
+```typescript
+className="ios:pt-4 android:pt-2 web:pt-0"
+```
+
+## 🔐 Authentication Flow
+
+The app uses Clerk for authentication with the following flow:
+
+1. **App Launch** → Check auth state in `app/_layout.tsx`
+2. **Not Signed In** → Show sign-in/sign-up screens
+3. **OAuth Flow** → Auto-generate username via `lib/oauth-utils.ts`
+4. **Email Verification** → Verify with code (424242 in dev mode)
+5. **Signed In** → Access protected routes
+6. **Session** → Auto-refresh handled by Clerk
+
+### Protected Routes
+
+Routes are guarded using `Stack.Protected`:
+
+```typescript
+// Only shown when NOT signed in
+<Stack.Protected guard={!isSignedIn}>
+  <Stack.Screen name="(auth)/sign-in" />
+</Stack.Protected>
+
+// Only shown when signed in
+<Stack.Protected guard={isSignedIn}>
+  <Stack.Screen name="index" />
+</Stack.Protected>
+```
+
+## 🏗️ Building for Production
+
+### Prerequisites
+
+Install EAS CLI:
+```bash
+npm install -g eas-cli
+eas login
+```
+
+### Configure EAS
+
+```bash
+eas build:configure
+```
+
+### Build for App Stores
+
+**Android:**
+```bash
+pnpm build:android
+```
+
+**iOS:**
+```bash
+pnpm build:ios
+```
+
+Builds will be available in your EAS dashboard.
+
+## 🧰 Tech Stack
+
+| Technology | Purpose |
+|-----------|---------|
+| [Expo](https://expo.dev) | React Native framework |
+| [Expo Router](https://expo.dev/router) | File-based routing |
+| [Clerk](https://clerk.com) | Authentication & user management |
+| [NativeWind](https://nativewind.dev) | Tailwind CSS for React Native |
+| [React Native Reusables](https://reactnativereusables.com) | UI component library |
+| [TypeScript](https://typescriptlang.org) | Type safety |
+| [Biome](https://biomejs.dev) | Linting & formatting |
+| [React Native Reanimated](https://docs.swmansion.com/react-native-reanimated/) | Animations |
+
+## 📚 Learn More
+
+- [Clerk Documentation](https://clerk.com/docs)
+- [Expo Documentation](https://docs.expo.dev/)
+- [Expo Router Guide](https://expo.dev/router)
+- [NativeWind Documentation](https://nativewind.dev/)
 - [React Native Reusables](https://reactnativereusables.com)
+- [React Native Documentation](https://reactnative.dev/docs/getting-started)
 
-## Contributing
+## 🤝 Contributing
 
 This project was created for a sharing session on Maestro testing. Feel free to use it as a template for your own projects!
 
+## 📄 License
+
+This project is open source and available under the MIT License.
+
 ---
 
-If this template helps you move faster, consider giving [React Native Reusables](https://github.com/founded-labs/react-native-reusables) a ⭐ on GitHub. It helps a lot!
+**Made with ❤️ for the React Native community**
+
+If this template helps you, consider giving [React Native Reusables](https://github.com/founded-labs/react-native-reusables) a ⭐ on GitHub!
