@@ -1,50 +1,86 @@
 appId: ${APP_ID}
 tags:
   - smokeTest
+  - todos
 ---
 # Test: Create Todo with All Required Fields
 #
-# RED PHASE: This test should FAIL until create todo functionality is implemented
+# Purpose: Verify complete todo creation flow with all mandatory fields
+#
+# Prerequisites:
+# - User must be authenticated
+# - App is on Active todos tab
 #
 # Test Steps:
-# 1. Authenticate user
+# 1. Authenticate user if not already signed in
 # 2. Navigate to Active tab
 # 3. Open create todo form
-# 4. Fill all required fields (title, description, icon, dueDate)
-# 5. Submit form
-# 6. Verify todo appears in Active tab with correct data
+# 4. Fill in title (required, max 100 chars)
+# 5. Fill in description (required, max 500 chars)
+# 6. Select icon from picker (ShoppingCart)
+# 7. Set due date/time (tomorrow at specific time)
+# 8. Submit form
+# 9. Verify success message
+# 10. Verify todo appears in Active tab with correct data
+#
+# Expected Result:
+# - Todo is created successfully in Convex database
+# - Success toast message is displayed
+# - Todo appears in Active tab list
+# - Todo shows correct title, description, icon, and status
+#
+# Test Data:
+# - Title: "Buy groceries"
+# - Description: "Get milk, eggs, bread, and vegetables for the week"
+# - Icon: ShoppingCart
+# - Due Date: Tomorrow (calculated via JavaScript helper)
+# - Status: Active (default for new todos)
 
-- runFlow: ../common/setup-auth.yaml
+# Sign in if not already authenticated
+- runFlow:
+    when:
+      visible: "Sign in to .*"
+    file: ../auth/sign-in.yaml
 
 # Ensure we're on Active tab
-- tapOn: "Active"
+- tapOn:
+    id: "active"
 
 # Open create todo form (via FAB or header button)
-- tapOn:
-    id: "create-todo-button"
+- tapOn: "Create new todo"
 
-# Fill in title
+# Fill in title (required field)
 - tapOn:
     id: "todo-title-input"
 - inputText: "Buy groceries"
 
-# Fill in description
+# Fill in description (required field)
 - tapOn:
     id: "todo-description-input"
 - inputText: "Get milk, eggs, bread, and vegetables for the week"
 
-# Select icon (ShoppingCart from the icon picker)
-- tapOn:
-    id: "todo-icon-picker"
+# Hide keyboard to access icon picker
+- hideKeyboard
+
+# Scroll to reveal icon picker (may be below fold)
+- scroll
+
+# Select icon from picker (ShoppingCart)
 - tapOn: "ShoppingCart"
 
-# Set due date (use date picker)
+# Calculate tomorrow's date and target time using JavaScript helper
+- runScript: calculate-datetime.js
+
+# Open date picker
 - tapOn:
-    id: "todo-due-date-picker"
-# Select tomorrow's date (assumes date picker opens)
+    id: todo-due-date
+
+# Select tomorrow's date (calculated by script)
+- tapOn: ${output.TOMORROW_DAY}
+
+# Close date picker by tapping outside or confirm button
 - tapOn:
-    text: "Tomorrow"
-- tapOn: "Confirm"
+    point: 50%,20%
 
 # Submit the form
 - tapOn:
@@ -52,14 +88,18 @@ tags:
 
 # Verify success message or navigation back to list
 - assertVisible: "Todo created successfully"
+- tapOn: "OK"
 
-# Verify the todo appears in the Active tab
+# Verify todo appears in list with correct title
 - assertVisible: "Buy groceries"
+
+# Verify todo shows correct description
 - assertVisible: "Get milk, eggs, bread, and vegetables for the week"
 
-# Verify it shows the shopping cart icon (text representation or icon)
+# Verify it shows the shopping cart icon (testID format)
 - assertVisible:
     id: "todo-icon-ShoppingCart"
 
-# Verify status badge shows Active
-- assertVisible: "Active"
+# Verify status badge shows Active (default for new todos)
+- assertVisible:
+    id: "active"

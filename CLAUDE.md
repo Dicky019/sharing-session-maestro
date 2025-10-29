@@ -4,20 +4,22 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## Project Overview
 
-This is a React Native project built with Expo, featuring Clerk authentication and React Native Reusables UI components. The app runs on iOS, Android, and Web platforms with React Native's New Architecture enabled.
+This is a React Native project built with Expo, featuring Clerk authentication, Convex backend, and React Native Reusables UI components. The app is a Todo management system with status tracking (active/inactive/complete) that runs on iOS, Android, and Web platforms with React Native's New Architecture enabled. It includes comprehensive Maestro UI tests for automation.
 
 **Key Technologies:**
 - **Expo Router** (file-based routing)
 - **Clerk** (authentication with OAuth support for Apple, GitHub, Google)
+- **Convex** (real-time backend with type-safe queries/mutations)
 - **NativeWind** (Tailwind CSS for React Native)
 - **React Native Reusables** (UI component library)
 - **TypeScript** with strict mode enabled
 - **Biome** (linting and formatting)
+- **Maestro** (mobile UI testing framework)
 
 ## Development Commands
 
 ```bash
-# Start development server (copies .env.development to .env)
+# Start development server
 pnpm dev
 
 # Platform-specific launches (after dev server is running)
@@ -45,6 +47,10 @@ pnpm lint:fix       # Fix auto-fixable lint issues
 pnpm format         # Format code with Biome
 pnpm format:fix     # Format and apply unsafe fixes
 
+# Convex backend
+npx convex dev      # Start Convex dev server (watches for changes)
+npx convex deploy   # Deploy to production
+
 # Cleanup
 pnpm clean  # Remove .expo and node_modules
 ```
@@ -53,6 +59,7 @@ pnpm clean  # Remove .expo and node_modules
 
 Before running the app:
 
+### 1. Clerk Authentication Setup
 1. **Set up Clerk account** at https://go.clerk.com/blVsQlm
 2. Configure authentication with **"Email, phone, username"** option
 3. Enable **Apple, GitHub, and Google** as SSO connections
@@ -66,6 +73,18 @@ Before running the app:
 The `pnpm dev` command automatically copies `.env.development` to `.env` before starting the server.
 
 **Important:** Never commit `.env` files. They are gitignored.
+
+### 2. Convex Backend Setup
+1. Install Convex CLI: `npm install -g convex`
+2. Create Convex project at https://dashboard.convex.dev
+3. Run `npx convex dev` to initialize and link your project
+4. Configure Clerk JWT integration:
+   - Go to Clerk Dashboard → Configure → JWT Templates
+   - Create new template → Select "Convex"
+   - Name MUST be "convex"
+   - Copy the Issuer URL (e.g., https://verb-noun-00.clerk.accounts.dev)
+   - Set `CLERK_JWT_ISSUER_DOMAIN` in your Convex deployment environment
+5. The Convex URL will be automatically added to your `.env.local` file
 
 ## Testing Authentication (Development Mode)
 
@@ -96,7 +115,7 @@ Clerk provides special test credentials that bypass actual email/SMS delivery:
 The routing structure uses Expo Router's file-based system with authentication guards:
 
 **`app/_layout.tsx`** - Root layout with providers and protected route logic:
-- Wraps app in `ClerkProvider`, `ThemeProvider`, `GestureHandlerRootView`
+- Wraps app in `ClerkProvider`, `ConvexProviderWithClerk`, `ThemeProvider`, `GestureHandlerRootView`
 - Uses `Stack.Protected` with guards based on `isSignedIn` state
 - Screens under `guard={!isSignedIn}` are auth-only (sign-in, sign-up)
 - Screens under `guard={isSignedIn}` require authentication
@@ -105,8 +124,15 @@ The routing structure uses Expo Router's file-based system with authentication g
 **Route Structure:**
 ```
 app/
-├── _layout.tsx              # Root layout with auth guards
-├── index.tsx                # Main authenticated home screen
+├── _layout.tsx              # Root layout with auth guards & Convex provider
+├── index.tsx                # Redirects to tabs
+├── (tabs)/                  # Tab navigation (requires auth)
+│   ├── _layout.tsx          # Tab bar configuration
+│   ├── active.tsx           # Active todos list
+│   ├── inactive.tsx         # Inactive todos list
+│   └── complete.tsx         # Completed todos list
+├── todo/
+│   └── new.tsx              # Create todo form
 ├── (auth)/                  # Auth flow screens (unprotected)
 │   ├── sign-in.tsx
 │   ├── sign-up/
@@ -119,6 +145,30 @@ app/
 └── +not-found.tsx           # 404 page
 ```
 
+### Convex Backend Architecture
+
+**`convex/schema.ts`** - Database schema definition:
+- Defines `todos` table with user isolation via `userId` field
+- Indexes: `by_user`, `by_user_and_status` for optimized queries
+- All fields are required (title, description, icon, status, dueDate)
+
+**`convex/todos.ts`** - Backend functions:
+- `list` - Query all todos for authenticated user
+- `listByStatus` - Query todos filtered by status (for tab navigation)
+- `create` - Mutation to create new todo with validation
+- All functions require Clerk authentication via `ctx.auth.getUserIdentity()`
+
+**`convex/auth.config.ts`** - Clerk JWT integration:
+- Configures Clerk as authentication provider
+- Requires `CLERK_JWT_ISSUER_DOMAIN` environment variable
+
+**Integration Flow:**
+1. User authenticates via Clerk
+2. Clerk provides JWT token
+3. `ConvexProviderWithClerk` passes JWT to Convex
+4. Convex validates token and extracts `identity.subject` (Clerk user ID)
+5. Backend functions use `identity.subject` for user isolation
+
 ### Component Architecture
 
 **UI Components** (`components/ui/`):
@@ -128,12 +178,18 @@ app/
 - All support dark mode via theme CSS variables
 
 **Feature Components** (`components/`):
-- `sign-in-form.tsx`, `sign-up-form.tsx` - Auth forms
+- `sign-in-form.tsx`, `sign-up-form.tsx` - Auth forms with firstName/lastName
 - `forgot-password-form.tsx`, `reset-password-form.tsx` - Password recovery
 - `verify-email-form.tsx` - Email verification UI
 - `social-connections.tsx` - OAuth buttons for Apple/GitHub/Google
 - `user-menu.tsx` - User profile dropdown with sign-out
 - `theme-toggle.tsx` - Light/dark mode switcher
+
+**Todo Components** (`components/todo/`):
+- `todo-form.tsx` - Create/edit todo form with validation
+- `todo-card.tsx` - Todo item display with status badge
+- `datetime-picker.tsx` - Date/time picker for due dates
+- `icon-picker.tsx` - Icon selection UI (uses lucide-react-native icons)
 
 ### Path Aliases
 
@@ -147,7 +203,7 @@ Configured in `tsconfig.json`:
 // Correct
 import { Button } from '@/components/ui/button';
 import { cn } from '@/lib/utils';
-import { LOGO } from '@/lib/constants';
+import { Todo } from '@/lib/types/todo';
 
 // Avoid
 import { Button } from '../../components/ui/button';
@@ -193,17 +249,24 @@ className="bg-primary"
 - `cn()` - Tailwind class merging with `clsx` and `tailwind-merge`
 
 **`lib/oauth-utils.ts`** - OAuth flow helpers:
+- `parseEmailName()` - Parses email format like "test+clerk_test@example.com" into firstName/lastName
 - `generateUsername()` - Creates unique username from email/firstName
 - `handleSignUp()` - Handles OAuth sign-up with automatic username generation
 
-### Clerk Authentication Flow
+**`lib/types/todo.ts`** - Todo type definitions:
+- `Todo` interface with all required fields
+- `TodoStatus` type: 'active' | 'inactive' | 'complete'
+- `TODO_STATUS_LABELS` - Display names for statuses
+- `TODO_ICON_OPTIONS` - Available icons from lucide-react-native (27 options)
+
+### Authentication & Data Flow
 
 1. **Initial Load**: `_layout.tsx` checks `isSignedIn` from `useAuth()`
 2. **Splash Screen**: Hidden once `isLoaded` is true
 3. **Protected Routes**: `Stack.Protected` guards routes based on auth state
-4. **Token Caching**: Automatic via `@clerk/clerk-expo/token-cache`
-5. **OAuth Handling**: `oauth-utils.ts` manages username generation for social sign-ins
-6. **Session Management**: Clerk handles token refresh automatically
+4. **Token Management**: Clerk JWT passed to Convex via `ConvexProviderWithClerk`
+5. **Data Fetching**: Use Convex hooks (`useQuery`, `useMutation`) with automatic reactivity
+6. **User Isolation**: All Convex queries filtered by `userId` (from Clerk JWT)
 7. **Sign Out**: Available through `UserMenu` component
 
 ## Code Style Guidelines
@@ -214,8 +277,8 @@ className="bg-primary"
 - Use `type` for unions, intersections, and utility types
 
 ### File & Component Naming
-- **Files**: kebab-case (e.g., `user-menu.tsx`)
-- **Components**: PascalCase (e.g., `UserMenu`)
+- **Files**: kebab-case (e.g., `user-menu.tsx`, `todo-card.tsx`)
+- **Components**: PascalCase (e.g., `UserMenu`, `TodoCard`)
 - **Screens**: Default exports
 - **Reusable components**: Named exports
 
@@ -224,10 +287,12 @@ className="bg-primary"
 // 1. External dependencies
 import { View } from 'react-native';
 import { useAuth } from '@clerk/clerk-expo';
+import { useQuery, useMutation } from 'convex/react';
 
 // 2. Internal imports with path aliases
 import { Button } from '@/components/ui/button';
 import { cn } from '@/lib/utils';
+import { api } from '@/convex/_generated/api';
 ```
 
 ### Biome Configuration
@@ -260,46 +325,92 @@ Run `pnpm lint` before committing.
 
 Example:
 ```typescript
-// app/profile.tsx
-export default function ProfileScreen() {
+// app/todo/[id].tsx
+export default function TodoDetailScreen() {
   return <View>...</View>;
 }
 
 // app/_layout.tsx - Add to protected section
 <Stack.Protected guard={isSignedIn}>
-  <Stack.Screen name="index" />
-  <Stack.Screen name="profile" options={{ title: 'Profile' }} />
+  <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
+  <Stack.Screen name="todo/[id]" options={{ title: 'Todo Details' }} />
 </Stack.Protected>
 ```
 
-### Adding a New UI Component
+### Working with Convex
 
-1. Create in `components/ui/` following React Native Reusables patterns
-2. Use NativeWind for styling with Tailwind classes
-3. Support dark mode via theme CSS variables (no conditional logic needed)
-4. Export component with named export
-5. Type all props with TypeScript
+**Querying Data:**
+```typescript
+import { useQuery } from 'convex/react';
+import { api } from '@/convex/_generated/api';
+
+function TodoList() {
+  const todos = useQuery(api.todos.list);
+  // todos is automatically reactive and includes loading/error states
+
+  if (todos === undefined) return <Text>Loading...</Text>;
+  return <FlatList data={todos} ... />;
+}
+```
+
+**Mutating Data:**
+```typescript
+import { useMutation } from 'convex/react';
+import { api } from '@/convex/_generated/api';
+
+function CreateTodoForm() {
+  const createTodo = useMutation(api.todos.create);
+
+  async function handleSubmit() {
+    await createTodo({
+      title: 'Buy groceries',
+      description: 'Get milk and eggs',
+      icon: 'ShoppingCart',
+      dueDate: new Date().toISOString(),
+    });
+  }
+}
+```
+
+**Filtered Queries:**
+```typescript
+// Query todos by status for tab navigation
+const activeTodos = useQuery(api.todos.listByStatus, { status: 'active' });
+const completeTodos = useQuery(api.todos.listByStatus, { status: 'complete' });
+```
+
+### Adding a New Convex Function
+
+1. Define in `convex/todos.ts` (or create new file)
+2. Use `query` for read operations, `mutation` for writes
+3. Always validate authentication: `await ctx.auth.getUserIdentity()`
+4. Use `identity.subject` for user isolation
+5. Validate input args with proper error messages
+6. TypeScript types are auto-generated in `convex/_generated/`
 
 Example:
 ```typescript
-import { Text } from 'react-native';
-import { cn } from '@/lib/utils';
+export const updateStatus = mutation({
+  args: {
+    todoId: v.id('todos'),
+    status: v.union(v.literal('active'), v.literal('inactive'), v.literal('complete')),
+  },
+  handler: async (ctx, args) => {
+    const identity = await ctx.auth.getUserIdentity();
+    if (!identity) throw new Error('Unauthenticated');
 
-interface BadgeProps {
-  children: React.ReactNode;
-  variant?: 'default' | 'destructive';
-}
+    // Verify ownership before update
+    const todo = await ctx.db.get(args.todoId);
+    if (todo?.userId !== identity.subject) {
+      throw new Error('Unauthorized');
+    }
 
-export function Badge({ children, variant = 'default' }: BadgeProps) {
-  return (
-    <Text className={cn(
-      'bg-primary text-primary-foreground',
-      variant === 'destructive' && 'bg-destructive text-destructive-foreground'
-    )}>
-      {children}
-    </Text>
-  );
-}
+    await ctx.db.patch(args.todoId, {
+      status: args.status,
+      updatedAt: new Date().toISOString(),
+    });
+  },
+});
 ```
 
 ### Working with Forms
@@ -310,26 +421,102 @@ export function Badge({ children, variant = 'default' }: BadgeProps) {
   - `useSignUp()` - Sign up flows
   - `useUser()` - Current user data
   - `useAuth()` - Auth state and session
-- Handle errors with Clerk's error types
+- Use Convex mutations for data operations
+- Handle errors with proper error states
 - Display loading states during async operations
+- Validate inputs before submission
 
-### OAuth Integration
+### Todo Form Validation
 
-When adding OAuth flows, use `lib/oauth-utils.ts`:
+The todo form has strict validation rules:
+- **Title**: Required, 1-100 characters
+- **Description**: Required, max 500 characters
+- **Icon**: Required, must be from `TODO_ICON_OPTIONS` (27 icons available)
+- **Due Date**: Required, must be valid ISO 8601 datetime
+- **Status**: Defaults to 'active' on creation
 
-```typescript
-import { handleSignUp } from '@/lib/oauth-utils';
+All validation is enforced both client-side and server-side (Convex).
 
-const { signUp } = useSignUp();
-const { setActive } = useSessionList();
+## Maestro UI Testing
 
-const success = await handleSignUp(signUp, setActive);
+### Test Structure
+
+Tests are located in `.maestro/flows/`:
+```
+.maestro/flows/
+├── common/
+│   ├── sign-in.yaml          # Reusable sign-in flow
+│   ├── sign-up.yaml          # Reusable sign-up flow
+│   └── setup-auth.yaml       # Common auth setup
+└── todos/
+    ├── create-todo.yaml      # Test creating a new todo
+    ├── calculate-datetime.js # Helper script for date/time
+    └── ...
 ```
 
-This handles:
-- Automatic username generation from email/firstName
-- Missing field completion
-- Session activation
+### Running Maestro Tests
+
+```bash
+# Install Maestro CLI (Mac/Linux)
+curl -Ls "https://get.maestro.mobile.dev" | bash
+
+# Run a single test
+maestro test .maestro/flows/todos/create-todo.yaml
+
+# Run all tests
+maestro test .maestro/flows/
+
+# Run with specific app ID
+maestro test .maestro/flows/todos/create-todo.yaml --env APP_ID=your.app.id
+```
+
+### Writing Maestro Tests
+
+Tests use YAML syntax with built-in commands:
+
+```yaml
+appId: ${APP_ID}
+tags:
+  - smokeTest
+---
+# Test description
+
+- launchApp
+
+# Reuse common flows
+- runFlow:
+    when:
+      notVisible:
+        id: "user-menu"
+    file: ../common/sign-in.yaml
+
+# Interact with elements
+- tapOn: "Create new todo"
+- tapOn:
+    id: "todo-title-input"
+- inputText: "Buy groceries"
+- hideKeyboard
+
+# Assertions
+- assertVisible: "Todo created successfully"
+- assertVisible:
+    id: "todo-icon-ShoppingCart"
+```
+
+**Key Testing Patterns:**
+- Always use `testID` prop for reliable element selection
+- Use conditional flows (`when`) to handle auth state
+- Hide keyboard before tapping non-input elements
+- Use JavaScript helpers for dynamic data (dates, etc.)
+- Tag tests appropriately (smokeTest, regression, etc.)
+
+### testID Conventions
+
+When adding testIDs for Maestro tests:
+- Use kebab-case: `testID="todo-title-input"`
+- Be specific: `testID="create-todo-submit"` not just `testID="submit"`
+- Icon elements: `testID="todo-icon-{IconName}"` e.g., `testID="todo-icon-ShoppingCart"`
+- Status badges: `testID="{status}"` e.g., `testID="active"`
 
 ## Important Notes
 
@@ -340,13 +527,7 @@ This handles:
 - **Safe Areas**: Use `react-native-safe-area-context` for proper insets
 - **Toasts**: Sonner Native configured at bottom-center with close button
 - **Platform Suppression**: iOS Simulator warnings are suppressed in development (`LogBox.ignoreLogs`)
-
-## Active Technologies
-- TypeScript 5.9.2 (strict mode) with React Native 0.81.5 and React 19.1.0 + Expo SDK 54, Expo Router 6, React Native Reusables, NativeWind 4, Clerk (existing auth), @react-native-community/datetimepicker (001-todo-list-status)
-- In-memory storage (dummy data in API routes) - no database persistence for Phase 1 (001-todo-list-status)
-- TypeScript 5.x with strict mode enabled (React Native + Expo SDK 52+) (001-todo-list-status)
-- In-memory Map (user-keyed) for MVP, with clear migration path to AsyncStorage or SQLite (001-todo-list-status)
-- AsyncStorage (user-keyed by Clerk userId) for persistent local storage across logout/login cycles (001-todo-list-status)
-
-## Recent Changes
-- 001-todo-list-status: Added TypeScript 5.9.2 (strict mode) with React Native 0.81.5 and React 19.1.0 + Expo SDK 54, Expo Router 6, React Native Reusables, NativeWind 4, Clerk (existing auth), @react-native-community/datetimepicker
+- **Real-time Updates**: Convex provides automatic reactivity - queries re-run when data changes
+- **User Isolation**: All todos are scoped to the authenticated user via Clerk JWT
+- **Date/Time Handling**: All dates stored as ISO 8601 strings in Convex
+- **Icon Library**: Uses lucide-react-native with 27 predefined icons for todos

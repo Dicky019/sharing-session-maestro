@@ -183,6 +183,7 @@ export function VerifyEmailForm() {
               <Label htmlFor="code">Verification code</Label>
               <Input
                 id="code"
+                testID="code"
                 autoCapitalize="none"
                 onChangeText={setCode}
                 returnKeyType="send"
@@ -212,14 +213,9 @@ export function VerifyEmailForm() {
                 </Text>
               </Button>
             </View>
-            <View className="gap-3">
-              <Button className="w-full" onPress={onSubmit}>
-                <Text>Continue</Text>
-              </Button>
-              <Button variant="link" className="mx-auto" onPress={router.back}>
-                <Text>Cancel</Text>
-              </Button>
-            </View>
+            <Button testID="verify-email-submit" className="w-full" onPress={onSubmit}>
+              <Text>Submit</Text>
+            </Button>
           </View>
         </CardContent>
       </Card>

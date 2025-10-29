@@ -25,11 +25,15 @@ export function UserMenu() {
   return (
     <Popover>
       <PopoverTrigger asChild ref={popoverTriggerRef}>
-        <Button variant="ghost" size="icon" className="size-8 rounded-full">
+        <Button
+          testID={`user-menu-${user?.username}`}
+          variant="ghost"
+          size="icon"
+          className="size-8 rounded-full">
           <UserAvatar />
         </Button>
       </PopoverTrigger>
-      <PopoverContent align="end" side="bottom" className="p-0">
+      <PopoverContent accessible align="end" side="bottom" className="p-0">
         <View className="gap-3 border-border border-b p-3">
           <View className="flex-row items-center gap-3">
             <UserAvatar className="size-10" />
@@ -47,7 +51,12 @@ export function UserMenu() {
               <ThemeIcon className="size-4" />
               <Text>Change Theme</Text>
             </Button>
-            <Button variant="outline" size="sm" className="flex-1" onPress={onSignOut}>
+            <Button
+              testID="sign-out"
+              variant="outline"
+              size="sm"
+              className="flex-1"
+              onPress={onSignOut}>
               <Icon as={LogOutIcon} className="size-4" />
               <Text>Sign Out</Text>
             </Button>

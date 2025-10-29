@@ -1,0 +1,47 @@
+appId: ${APP_ID}
+tags:
+  - util
+  - auth
+---
+# Utility Flow: Sign Out
+#
+# Purpose: Reusable flow to sign out the current user
+#
+# Usage:
+# This is a utility flow used by other tests to ensure clean state.
+# Call this flow using runFlow with conditional when:
+#
+# Example:
+# - runFlow:
+#     when:
+#       visible:
+#         id: "user-menu-.*"
+#     file: sign-out.yaml
+#
+# Prerequisites:
+# - User must be logged in
+# - User menu must be visible
+#
+# Steps:
+# 1. Tap on user menu button (matches any username)
+# 2. Wait for popover menu to open
+# 3. Tap on "Sign Out" button
+# 4. User is logged out and redirected to sign-in screen
+#
+# Expected Result:
+# - User session is terminated
+# - App navigates to sign-in screen
+
+# Open user menu popover
+- tapOn:
+    id: "user-menu-.*"
+
+# Wait for popover animation to complete
+- waitForAnimationToEnd
+
+# Tap sign-out button
+- tapOn:
+    id: "sign-out"
+
+# Verify sign-out was successful (sign-in screen should appear)
+# Note: Add assertion here if needed for your test flow

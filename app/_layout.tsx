@@ -11,7 +11,7 @@ import * as SplashScreen from 'expo-splash-screen';
 import { StatusBar } from 'expo-status-bar';
 import { useColorScheme } from 'nativewind';
 import { useEffect } from 'react';
-import { LogBox, Platform } from 'react-native';
+import { LogBox } from 'react-native';
 import { GestureHandlerRootView } from 'react-native-gesture-handler';
 import { Toaster } from 'sonner-native';
 import { NAV_THEME } from '@/lib/theme';
@@ -21,17 +21,8 @@ const convex = new ConvexReactClient(process.env.EXPO_PUBLIC_CONVEX_URL ?? '', {
   unsavedChangesWarning: false,
 });
 
-// Suppress iOS Simulator warnings that don't affect functionality
-if (__DEV__ && Platform.OS === 'ios') {
-  LogBox.ignoreLogs([
-    'RemoteTextInput',
-    'TextInputUI',
-    'CoreHaptics',
-    'UIKitCore',
-    'CHHapticPattern',
-    'hapticpatternlibrary.plist',
-  ]);
-}
+// this app only for showcase
+LogBox.ignoreAllLogs();
 
 export {
   // Catch any errors thrown by the Layout component.

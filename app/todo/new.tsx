@@ -62,7 +62,7 @@ export default function NewTodoScreen() {
       <Stack.Screen
         options={{
           title: 'Create Todo',
-          presentation: 'modal',
+          headerBackTitle: 'Back',
         }}
       />
       <View className="flex-1 bg-background">

@@ -3,9 +3,10 @@
 
 # Include test flows from feature directories
 flows:
-  - todos/*.yaml
+  - flows/auth/sign-in.yaml
+  - flows/todos/*.yaml
   # Exclude common utilities from test runs (they are reusable subflows)
-  - "!common/*.yaml"
+  - "!flows/common/*.yaml"
 
 # Tag-based execution
 # Use --includeTags or --excludeTags to run specific test subsets

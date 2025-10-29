@@ -10,13 +10,19 @@ import { Text } from '@/components/ui/text';
 
 export function SignUpForm() {
   const { signUp, setActive, isLoaded } = useSignUp();
+  const [firstName, setFirstName] = useState('');
+  const [lastName, setLastName] = useState('');
   const [username, setUsername] = useState('');
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
+  const firstNameInputRef = useRef<TextInput>(null);
+  const lastNameInputRef = useRef<TextInput>(null);
   const usernameInputRef = useRef<TextInput>(null);
   const emailInputRef = useRef<TextInput>(null);
   const passwordInputRef = useRef<TextInput>(null);
   const [error, setError] = useState<{
+    firstName?: string;
+    lastName?: string;
     username?: string;
     email?: string;
     password?: string;
@@ -28,15 +34,20 @@ export function SignUpForm() {
       return;
     }
 
+    const isTestEmail = email.includes('+clerk_test');
+
     console.log('[SignUp] Starting sign-up process');
     console.log('[SignUp] Username:', username);
     console.log('[SignUp] Email:', email);
-    console.log('[SignUp] Is test email?', email.includes('+clerk_test'));
+    console.log('[SignUp] Is test email?', isTestEmail);
 
     // Start sign-up process using email and password provided
     try {
       console.log('[SignUp] Creating sign-up...');
+
       const signUpResponse = await signUp.create({
+        firstName,
+        lastName,
         username,
         emailAddress: email,
         password,
@@ -74,7 +85,7 @@ export function SignUpForm() {
       });
       console.log('[SignUp] Email verification prepared successfully');
 
-      if (email.includes('+clerk_test')) {
+      if (isTestEmail) {
         console.log('[SignUp] ⚠️ TEST EMAIL DETECTED - Use code: 424242');
       }
 
@@ -89,7 +100,11 @@ export function SignUpForm() {
 
         // Determine which field has the error
         const errorMsg = err.message.toLowerCase();
-        if (errorMsg.includes('username')) {
+        if (errorMsg.includes('first name') || errorMsg.includes('firstname')) {
+          setError({ firstName: err.message });
+        } else if (errorMsg.includes('last name') || errorMsg.includes('lastname')) {
+          setError({ lastName: err.message });
+        } else if (errorMsg.includes('username')) {
           setError({ username: err.message });
         } else if (errorMsg.includes('identifier') || errorMsg.includes('email')) {
           setError({ email: err.message });
@@ -102,6 +117,14 @@ export function SignUpForm() {
       }
       console.error('[SignUp] Error details:', err);
     }
+  }
+
+  function onFirstNameSubmitEditing() {
+    lastNameInputRef.current?.focus();
+  }
+
+  function onLastNameSubmitEditing() {
+    usernameInputRef.current?.focus();
   }
 
   function onUsernameSubmitEditing() {
@@ -123,11 +146,50 @@ export function SignUpForm() {
         </CardHeader>
         <CardContent className="gap-6">
           <View className="gap-6">
+            <View className="flex-row gap-2">
+              <View className="flex-1 gap-1.5">
+                <Label htmlFor="firstName">First Name</Label>
+                <Input
+                  ref={firstNameInputRef}
+                  id="firstName"
+                  testID="first-name"
+                  placeholder="John"
+                  autoComplete="given-name"
+                  autoCapitalize="words"
+                  onChangeText={setFirstName}
+                  onSubmitEditing={onFirstNameSubmitEditing}
+                  returnKeyType="next"
+                  submitBehavior="submit"
+                />
+                {error.firstName ? (
+                  <Text className="font-medium text-destructive text-sm">{error.firstName}</Text>
+                ) : null}
+              </View>
+              <View className="flex-1 gap-1.5">
+                <Label htmlFor="lastName">Last Name</Label>
+                <Input
+                  ref={lastNameInputRef}
+                  id="lastName"
+                  testID="last-name"
+                  placeholder="Doe"
+                  autoComplete="family-name"
+                  autoCapitalize="words"
+                  onChangeText={setLastName}
+                  onSubmitEditing={onLastNameSubmitEditing}
+                  returnKeyType="next"
+                  submitBehavior="submit"
+                />
+                {error.lastName ? (
+                  <Text className="font-medium text-destructive text-sm">{error.lastName}</Text>
+                ) : null}
+              </View>
+            </View>
             <View className="gap-1.5">
               <Label htmlFor="username">Username</Label>
               <Input
                 ref={usernameInputRef}
                 id="username"
+                testID="username"
                 placeholder="johndoe"
                 autoComplete="username"
                 autoCapitalize="none"
@@ -145,6 +207,7 @@ export function SignUpForm() {
               <Input
                 ref={emailInputRef}
                 id="email"
+                testID="sign-up-email"
                 placeholder="m@example.com"
                 keyboardType="email-address"
                 autoComplete="email"
@@ -165,6 +228,7 @@ export function SignUpForm() {
               <Input
                 ref={passwordInputRef}
                 id="password"
+                testID="sign-up-password"
                 secureTextEntry
                 onChangeText={setPassword}
                 returnKeyType="send"

@@ -7,7 +7,6 @@
 import { useQuery } from 'convex/react';
 import { useRouter } from 'expo-router';
 import { ActivityIndicator, View } from 'react-native';
-import { AuthDebug } from '@/components/debug/auth-debug';
 import { TodoList } from '@/components/todo/todo-list';
 import { Text } from '@/components/ui/text';
 import { api } from '@/convex/_generated/api';
@@ -20,7 +19,6 @@ export default function ActiveScreen() {
   if (todos === undefined) {
     return (
       <View className="flex-1 bg-background">
-        {/* <AuthDebug /> */}
         <View className="flex-1 items-center justify-center p-8">
           <ActivityIndicator size="large" />
           <Text className="mt-4 text-muted-foreground">Loading todos...</Text>
@@ -37,7 +35,6 @@ export default function ActiveScreen() {
 
   return (
     <View className="flex-1 bg-background">
-      {/* <AuthDebug /> */}
       <TodoList
         todos={todos}
         status="active"

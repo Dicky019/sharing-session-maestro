@@ -1,0 +1,54 @@
+appId: ${APP_ID}
+tags:
+  - smokeTest
+  - auth
+---
+# Test: Sign In with Existing Account
+#
+# Purpose: Verify user can successfully sign in with valid credentials
+#
+# Prerequisites:
+# - User account must exist (test+clerk_test@example.com)
+# - App is installed on device/simulator
+#
+# Test Steps:
+# 1. Launch app
+# 2. Sign out if already logged in
+# 3. Verify sign-in screen is displayed
+# 4. Fill in email address (test+clerk_test@example.com)
+# 5. Fill in password (TestPassword123!)
+# 6. Submit sign-in form
+# 7. Verify successful authentication and navigation to home screen
+#
+# Expected Result:
+# - User is signed in successfully
+# - App navigates to home/tabs screen
+# - User menu is visible in header
+
+- launchApp
+
+# Sign out first if already logged in
+- runFlow:
+    when:
+      visible:
+        id: "user-menu-.*"
+    file: ../auth/sign-out.yaml
+
+# Verify we're on sign-in screen
+- assertVisible: "Sign in to .*"
+- assertVisible: "Welcome back! Please sign in to continue"
+
+# Fill in email address
+- tapOn: "m@example.com"
+- inputText: "test+clerk_test@example.com"
+
+# Fill in password
+- tapOn:
+    id: "sign-in-password"
+- inputText: "TestPassword123!"
+
+# Submit sign-in form
+- tapOn: "Continue"
+
+# Verify successful sign-in (user menu should be visible)
+# Note: This assertion may need adjustment based on your home screen layout

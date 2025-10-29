@@ -14,14 +14,22 @@ tags:
 # 5. Fill fields one by one and verify errors clear
 # 6. Verify form can be submitted once all fields are valid
 
-- runFlow: ../common/setup-auth.yaml
+#  TODO: implement this test letter 
+# Sign in if not already authenticated
+- runFlow:
+    when:
+      visible: "Sign in to .*"
+    file: ../auth/sign-in.yaml
 
 # Ensure we're on Active tab
-- tapOn: "Active"
+- tapOn:
+    id: "active"
 
 # Open create todo form
 - tapOn:
     id: "create-todo-button"
+
+- scroll
 
 # Attempt to submit with all fields empty
 - tapOn:

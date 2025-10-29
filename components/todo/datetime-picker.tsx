@@ -11,7 +11,9 @@ import { Calendar } from 'lucide-react-native';
 import { useColorScheme } from 'nativewind';
 import { useState } from 'react';
 import { Platform, Pressable, TextInput, View } from 'react-native';
+import { FadeIn } from 'react-native-reanimated';
 import { Label } from '@/components/ui/label';
+import { NativeOnlyAnimatedView } from '@/components/ui/native-only-animated-view';
 import { Text } from '@/components/ui/text';
 
 interface DateTimePickerProps {
@@ -79,25 +81,28 @@ export function TodoDateTimePicker({
   return (
     <View className="gap-2">
       <Label nativeID={testID}>{label}</Label>
-      <Pressable
+      <View
+        testID={testID}
         nativeID={testID}
-        onPress={() => setShowPicker(true)}
         className={`h-12 flex-row items-center gap-2 rounded-md border border-input px-4 ${error ? 'border-destructive' : 'border-input'}bg-background`}>
         <Calendar size={20} color={iconColor} />
-        <Text className="flex-1 text-foreground">
-          {value ? formatDate(value) : 'Select date and time'}
-        </Text>
-      </Pressable>
-
-      {showPicker && (
         <DateTimePicker
+          testID="todo-due-date"
           value={value || new Date()}
-          mode="datetime"
+          mode="date"
           display="default"
           onChange={handleNativeChange}
           minimumDate={new Date()} // Don't allow past dates
         />
-      )}
+        <DateTimePicker
+          testID="todo-due-time"
+          value={value || new Date()}
+          mode="time"
+          display="default"
+          onChange={handleNativeChange}
+          minimumDate={new Date()} // Don't allow past dates
+        />
+      </View>
 
       {error && <Text className="text-destructive text-xs">{error}</Text>}
     </View>

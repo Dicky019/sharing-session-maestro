@@ -1,0 +1,77 @@
+appId: ${APP_ID}
+tags:
+  - smokeTest
+  - auth
+---
+# Test: Sign Up with New Account
+#
+# Purpose: Verify complete user registration flow with email verification
+#
+# Prerequisites:
+# - App is installed on device/simulator
+# - Using Clerk test email format for automatic verification
+#
+# Test Steps:
+# 1. Launch app
+# 2. Navigate to sign-up screen
+# 3. Fill in first name (John)
+# 4. Fill in last name (Doe)
+# 5. Fill in username (johndoe) and copy for later verification
+# 6. Fill in email (johndoe+clerk_test@example.com)
+# 7. Fill in password (JohndoePassword123!)
+# 8. Submit registration form
+# 9. Enter verification code (424242 for test emails)
+# 10. Complete sign-up process
+# 11. Verify user is logged in and redirected to home
+#
+# Expected Result:
+# - Account is created successfully
+# - Email verification completes with test code
+# - User is signed in automatically
+# - User menu shows with correct username
+
+- launchApp
+
+# Navigate to sign-up screen
+- tapOn: "Sign up"
+
+# Fill in first name
+- tapOn:
+    id: "first-name"
+- inputText: "John"
+
+# Fill in last name
+- tapOn:
+    id: "last-name"
+- inputText: "Doe"
+
+# Fill in username and copy it for later assertion
+- tapOn:
+    id: "username"
+- inputText: "johndoe"
+- copyTextFrom:
+    id: "username"
+
+# Fill in email (using Clerk test format)
+- tapOn: "m@example.com"
+- inputText: "johndoe+clerk_test@example.com"
+
+# Fill in password and proceed to verification
+- tapOn: "next"
+- inputText: "JohndoePassword123!"
+
+# Submit form to trigger email verification
+- tapOn: "send"
+
+# Enter verification code (424242 is the test code for Clerk)
+- tapOn:
+    id: "code"
+- inputText: "424242"
+
+# Submit verification code
+- tapOn:
+    id: "verify-email-submit"
+
+# Verify successful sign-up - user menu should be visible with username
+- assertVisible:
+    id: ${"user-menu-" + maestro.copiedText}

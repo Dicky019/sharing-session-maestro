@@ -29,7 +29,7 @@ export default function TabLayout() {
   const HeaderRight = () => (
     <Pressable
       onPress={() => router.push('/todo/new')}
-      nativeID="create-todo-button"
+      testID="create-todo-button"
       accessibilityLabel="Create new todo"
       accessibilityRole="button"
       className="mr-4 p-2">
@@ -48,6 +48,7 @@ export default function TabLayout() {
       <Tabs.Screen
         name="active"
         options={{
+          tabBarButtonTestID: 'active',
           title: 'Active',
           tabBarIcon: ({ color }) => <ListTodo color={color} size={24} />,
         }}
@@ -55,6 +56,7 @@ export default function TabLayout() {
       <Tabs.Screen
         name="inactive"
         options={{
+          tabBarButtonTestID: 'inactive',
           title: 'Terlewat',
           tabBarIcon: ({ color }) => <XCircle color={color} size={24} />,
         }}
@@ -62,6 +64,7 @@ export default function TabLayout() {
       <Tabs.Screen
         name="complete"
         options={{
+          tabBarButtonTestID: 'complete',
           title: 'Complete',
           tabBarIcon: ({ color }) => <CheckCircle color={color} size={24} />,
         }}

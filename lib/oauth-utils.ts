@@ -2,12 +2,6 @@
  * OAuth utility functions for handling social authentication flows
  */
 
-/**
- * Generate a unique username from email or first name
- * @param emailAddress - User's email address
- * @param firstName - User's first name
- * @returns Generated username with random suffix
- */
 export const generateUsername = (emailAddress?: string, firstName?: string): string => {
   let username = '';
 

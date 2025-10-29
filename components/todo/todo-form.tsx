@@ -77,9 +77,9 @@ export function TodoForm({ onSubmit, onCancel, initialData, isLoading }: TodoFor
         <View className="gap-4">
           {/* Title Input */}
           <View className="gap-2">
-            <Label nativeID="todo-title-input">Title</Label>
+            <Label>Title</Label>
             <Input
-              nativeID="todo-title-input"
+              testID="todo-title-input"
               value={title}
               onChangeText={(text) => {
                 setTitle(text);
@@ -98,9 +98,9 @@ export function TodoForm({ onSubmit, onCancel, initialData, isLoading }: TodoFor
 
           {/* Description Input */}
           <View className="gap-2">
-            <Label nativeID="todo-description-input">Description</Label>
+            <Label>Description</Label>
             <Textarea
-              nativeID="todo-description-input"
+              testID="todo-description-input"
               value={description}
               onChangeText={(text) => {
                 setDescription(text);
@@ -156,7 +156,7 @@ export function TodoForm({ onSubmit, onCancel, initialData, isLoading }: TodoFor
 
           {/* Action Buttons */}
           <View className="mt-4 mb-safe-offset-4 gap-3">
-            <Button nativeID="create-todo-submit" onPress={handleSubmit} disabled={isLoading}>
+            <Button testID="create-todo-submit" onPress={handleSubmit} disabled={isLoading}>
               <Text className="font-medium text-primary-foreground">
                 {isLoading ? 'Creating...' : 'Create Todo'}
               </Text>
