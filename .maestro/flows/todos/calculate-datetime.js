@@ -6,8 +6,7 @@ tomorrow.setDate(tomorrow.getDate() + 1);
 output.TOMORROW_DAY = tomorrow.getDate().toString();
 
 // Month abbreviation (e.g., "Oct")
-const months = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun',
-               'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+const months = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
 output.TOMORROW_MONTH = months[tomorrow.getMonth()];
 
 // Year (e.g., "2025")

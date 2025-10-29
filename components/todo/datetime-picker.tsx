@@ -9,15 +9,12 @@
 import DateTimePicker, { type DateTimePickerEvent } from '@react-native-community/datetimepicker';
 import { Calendar } from 'lucide-react-native';
 import { useColorScheme } from 'nativewind';
-import { useState } from 'react';
-import { Platform, Pressable, TextInput, View } from 'react-native';
-import { FadeIn } from 'react-native-reanimated';
+import { Platform, TextInput, View } from 'react-native';
 import { Label } from '@/components/ui/label';
-import { NativeOnlyAnimatedView } from '@/components/ui/native-only-animated-view';
 import { Text } from '@/components/ui/text';
 
 interface DateTimePickerProps {
-  value?: Date;
+  value: Date;
   onChange: (date: Date) => void;
   label?: string;
   error?: string;
@@ -32,20 +29,10 @@ export function TodoDateTimePicker({
   testID = 'todo-due-date-picker',
 }: DateTimePickerProps) {
   const { colorScheme } = useColorScheme();
-  const [showPicker, setShowPicker] = useState(false);
   const iconColor = colorScheme === 'dark' ? '#ffffff' : '#000000';
-
-  // Format date for display
-  const formatDate = (date: Date) => {
-    return date.toLocaleString('en-US', {
-      dateStyle: 'medium',
-      timeStyle: 'short',
-    });
-  };
 
   // Handle native picker change (iOS/Android)
   const handleNativeChange = (_event: DateTimePickerEvent, selectedDate?: Date) => {
-    setShowPicker(Platform.OS === 'ios'); // Keep open on iOS
     if (selectedDate) {
       onChange(selectedDate);
     }
@@ -88,16 +75,8 @@ export function TodoDateTimePicker({
         <Calendar size={20} color={iconColor} />
         <DateTimePicker
           testID="todo-due-date"
-          value={value || new Date()}
+          value={value}
           mode="date"
-          display="default"
-          onChange={handleNativeChange}
-          minimumDate={new Date()} // Don't allow past dates
-        />
-        <DateTimePicker
-          testID="todo-due-time"
-          value={value || new Date()}
-          mode="time"
           display="default"
           onChange={handleNativeChange}
           minimumDate={new Date()} // Don't allow past dates

@@ -1,0 +1,8 @@
+appId: ${APP_ID}
+tags:
+  - util
+---
+
+# Verify successful sign-in (user menu should be visible)
+- assertVisible:
+    id: "user-menu-.*"

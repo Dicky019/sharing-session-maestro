@@ -30,33 +30,31 @@ tags:
 # - Email: Loaded from credentials.js (test+clerk_test@example.com)
 # - Password: Loaded from credentials.js (TestPassword123!)
 
-# Load test sign-in
-- runScript: js/sign-in.js
-
 - launchApp
 
-# Sign out first if already logged in
-- runFlow:
-    when:
-      visible:
-        id: "user-menu-.*"
-    file: ../common/popover-sign-out.yaml
-
-# Verify we're on sign-in screen
-- assertVisible: "SignIn to .*"
-- assertVisible: "Welcome back! Please sign in to continue"
-
-# Fill in email address (from JavaScript credentials)
-- tapOn: "m@example.com"
-- inputText: ${output.TEST_EMAIL}
-
-# Fill in password (from JavaScript credentials)
 - tapOn:
-    id: "sign-in-password"
-- inputText: ${output.TEST_PASSWORD}
+    id: oauth_google
+    delay: 500
 
-# Submit sign-in form
-- tapOn: "Continue"
+- waitForAnimationToEnd:
+    timeout: 1000
 
-# Verify successful sign-in (user menu should be visible)
-- runFlow: ../common/verify-success-auth.yaml
+- tapOn: Continue
+
+- waitForAnimationToEnd:
+    timeout: 1200 #ms
+
+- tapOn:
+    point: 50%,50%
+
+- waitForAnimationToEnd:
+    timeout: 1200 #ms
+
+- tapOn:
+    point: 75%,80%
+
+- waitForAnimationToEnd:
+    timeout: 1200 #ms
+
+# Verify successful forgot-password (user menu should be visible)
+- runFlow: ../../common/verify-success-auth.yaml

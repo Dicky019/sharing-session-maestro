@@ -8,7 +8,7 @@
 import * as Icons from 'lucide-react-native';
 import { Calendar } from 'lucide-react-native';
 import { useColorScheme } from 'nativewind';
-import { Pressable, View } from 'react-native';
+import { View } from 'react-native';
 import { Card, CardContent } from '@/components/ui/card';
 import { Text } from '@/components/ui/text';
 import { TODO_STATUS_LABELS, type Todo } from '@/lib/types/todo';

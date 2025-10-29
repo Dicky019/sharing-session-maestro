@@ -1,5 +1,5 @@
 import { ScrollView, View } from 'react-native';
-import { ResetPasswordForm } from '@/components/reset-password-form';
+import { ResetPasswordForm } from '@/components/auth/reset-password-form';
 
 export default function ResetPasswordScreen() {
   return (

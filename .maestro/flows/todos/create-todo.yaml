@@ -39,7 +39,7 @@ tags:
 # Sign in if not already authenticated
 - runFlow:
     when:
-      visible: "Sign in to .*"
+      visible: "SignIn to .*"
     file: ../auth/sign-in.yaml
 
 # Ensure we're on Active tab

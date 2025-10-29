@@ -1,6 +1,6 @@
 appId: ${APP_ID}
 tags:
-  - util
+  - smokeTest
   - auth
 ---
 # Utility Flow: Sign Out
@@ -32,16 +32,9 @@ tags:
 # - User session is terminated
 # - App navigates to sign-in screen
 
-# Open user menu popover
-- tapOn:
-    id: "user-menu-.*"
+- launchApp
 
-# Wait for popover animation to complete
-- waitForAnimationToEnd
-
-# Tap sign-out button
-- tapOn:
-    id: "sign-out"
+- runFlow: ../common/popover-sign-out.yaml
 
 # Verify sign-out was successful (sign-in screen should appear)
 # Note: Add assertion here if needed for your test flow

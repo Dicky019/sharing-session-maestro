@@ -21,7 +21,7 @@ export default function NewTodoScreen() {
     title: string;
     description: string;
     icon: string;
-    dueDate: string;
+    dueDate: Date;
   }) => {
     try {
       setIsLoading(true);
@@ -31,7 +31,7 @@ export default function NewTodoScreen() {
         title: data.title,
         description: data.description,
         icon: data.icon,
-        dueDate: data.dueDate,
+        dueDate: data.dueDate.toISOString(),
       });
 
       // Show success message

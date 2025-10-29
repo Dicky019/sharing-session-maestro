@@ -7,7 +7,7 @@ import { Image, type ImageSourcePropType, Platform, View } from 'react-native';
 import { Button } from '@/components/ui/button';
 import { handleSignUp } from '@/lib/oauth-utils';
 import { cn } from '@/lib/utils';
-import { Text } from './ui/text';
+import { Text } from '../ui/text';
 
 WebBrowser.maybeCompleteAuthSession();
 
@@ -77,6 +77,7 @@ export function SocialConnections() {
         return (
           <Button
             key={strategy.type}
+            testID={strategy.type}
             variant="outline"
             size="sm"
             className="sm:flex-1"

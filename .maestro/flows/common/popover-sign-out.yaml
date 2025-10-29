@@ -1,0 +1,13 @@
+appId: ${APP_ID}
+tags:
+  - util
+---
+
+# Open user menu popover
+- tapOn:
+    id: "user-menu-.*"
+    delay: 300
+
+# Tap sign-out button
+- tapOn:
+    point: 35%,25%

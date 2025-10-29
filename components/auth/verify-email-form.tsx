@@ -1,7 +1,10 @@
 import { useSignUp } from '@clerk/clerk-expo';
-import { router, useLocalSearchParams } from 'expo-router';
+import { zodResolver } from '@hookform/resolvers/zod';
+import { useLocalSearchParams } from 'expo-router';
 import { useCallback, useEffect, useRef, useState } from 'react';
+import { Controller, useForm } from 'react-hook-form';
 import { type TextStyle, View } from 'react-native';
+import { z } from 'zod';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
@@ -12,12 +15,28 @@ const RESEND_CODE_INTERVAL_SECONDS = 30;
 
 const TABULAR_NUMBERS_STYLE: TextStyle = { fontVariant: ['tabular-nums'] };
 
+const verifyEmailSchema = z.object({
+  code: z.string().min(1, 'Verification code is required').length(6, 'Code must be 6 digits'),
+});
+
+type VerifyEmailFormData = z.infer<typeof verifyEmailSchema>;
+
 export function VerifyEmailForm() {
   const { signUp, setActive, isLoaded } = useSignUp();
   const { email = '' } = useLocalSearchParams<{ email?: string }>();
-  const [code, setCode] = useState('');
-  const [error, setError] = useState('');
   const { countdown, restartCountdown } = useCountdown(RESEND_CODE_INTERVAL_SECONDS);
+
+  const {
+    control,
+    handleSubmit,
+    setError,
+    formState: { errors, isSubmitting },
+  } = useForm<VerifyEmailFormData>({
+    resolver: zodResolver(verifyEmailSchema),
+    defaultValues: {
+      code: '',
+    },
+  });
 
   useEffect(() => {
     console.log('[VerifyEmail] Component mounted');
@@ -48,35 +67,37 @@ export function VerifyEmailForm() {
 
           // If only username is missing, show a helpful message
           if (signUp.missingFields?.includes('username') && signUp.missingFields.length === 1) {
-            setError(
-              'Email verified! However, a username is required. Please go back and sign up again with a username.'
-            );
+            setError('code', {
+              type: 'manual',
+              message:
+                'Email verified! However, a username is required. Please go back and sign up again with a username.',
+            });
           }
         }
       }
     }
-  }, [isLoaded, signUp, email, setActive]);
+  }, [isLoaded, signUp, email, setActive, setError]);
 
-  async function onSubmit() {
+  async function onSubmit(data: VerifyEmailFormData) {
     if (!isLoaded) {
       console.log('[VerifyEmail] SignUp not loaded yet');
       return;
     }
 
     console.log('[VerifyEmail] Starting verification attempt');
-    console.log('[VerifyEmail] Code entered:', code);
-    console.log('[VerifyEmail] Code length:', code.length);
+    console.log('[VerifyEmail] Code entered:', data.code);
+    console.log('[VerifyEmail] Code length:', data.code.length);
 
     if (email.includes('+clerk_test')) {
       console.log('[VerifyEmail] ⚠️ TEST EMAIL - Expected code: 424242');
-      console.log('[VerifyEmail] Code matches?', code === '424242');
+      console.log('[VerifyEmail] Code matches?', data.code === '424242');
     }
 
     try {
       // Use the code the user provided to attempt verification
       console.log('[VerifyEmail] Attempting email verification...');
       const signUpAttempt = await signUp.attemptEmailAddressVerification({
-        code,
+        code: data.code,
       });
 
       console.log('[VerifyEmail] Verification attempt completed');
@@ -123,13 +144,15 @@ export function VerifyEmailForm() {
           console.log('[VerifyEmail] Sign-up status:', signUp.status);
           console.log('[VerifyEmail] Unverified fields:', signUp.unverifiedFields);
           console.log('[VerifyEmail] Missing fields:', signUp.missingFields);
-          setError(
-            'Email already verified. If you are still seeing this screen, please try signing in instead.'
-          );
+          setError('code', {
+            type: 'manual',
+            message:
+              'Email already verified. If you are still seeing this screen, please try signing in instead.',
+          });
           return;
         }
 
-        setError(err.message);
+        setError('code', { type: 'manual', message: err.message });
         return;
       }
       console.error('[VerifyEmail] Error details:', err);
@@ -161,7 +184,7 @@ export function VerifyEmailForm() {
       // See https://go.clerk.com/mRUDrIe for more info on error handling
       if (err instanceof Error) {
         console.error('[VerifyEmail] Error message:', err.message);
-        setError(err.message);
+        setError('code', { type: 'manual', message: err.message });
         return;
       }
       console.error('[VerifyEmail] Error details:', err);
@@ -181,20 +204,27 @@ export function VerifyEmailForm() {
           <View className="gap-6">
             <View className="gap-1.5">
               <Label htmlFor="code">Verification code</Label>
-              <Input
-                id="code"
-                testID="code"
-                autoCapitalize="none"
-                onChangeText={setCode}
-                returnKeyType="send"
-                keyboardType="numeric"
-                autoComplete="sms-otp"
-                textContentType="oneTimeCode"
-                onSubmitEditing={onSubmit}
+              <Controller
+                control={control}
+                name="code"
+                render={({ field: { onChange, onBlur, value } }) => (
+                  <Input
+                    id="code"
+                    testID="code"
+                    autoCapitalize="none"
+                    value={value}
+                    onChangeText={onChange}
+                    onBlur={onBlur}
+                    keyboardType="numeric"
+                    autoComplete="sms-otp"
+                    textContentType="oneTimeCode"
+                    onSubmitEditing={handleSubmit(onSubmit)}
+                  />
+                )}
               />
-              {!error ? null : (
-                <Text className="font-medium text-destructive text-sm">{error}</Text>
-              )}
+              {errors.code ? (
+                <Text className="font-medium text-destructive text-sm">{errors.code.message}</Text>
+              ) : null}
               {email.includes('+clerk_test') ? (
                 <View className="rounded-md border border-primary/20 bg-primary/5 p-3">
                   <Text className="text-center text-primary text-xs">
@@ -213,7 +243,11 @@ export function VerifyEmailForm() {
                 </Text>
               </Button>
             </View>
-            <Button testID="verify-email-submit" className="w-full" onPress={onSubmit}>
+            <Button
+              testID="verify-email-submit"
+              className="w-full"
+              onPress={handleSubmit(onSubmit)}
+              disabled={isSubmitting}>
               <Text>Submit</Text>
             </Button>
           </View>

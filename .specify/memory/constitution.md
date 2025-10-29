@@ -1,20 +1,18 @@
 <!--
 Sync Impact Report:
-Version Change: 1.0.0 → 1.1.0
+Version Change: 1.2.0 → 1.2.1
 Modified Principles:
-  - Testing Standards section materially expanded with Maestro best practices
-Added Sections:
-  - Maestro Testing Standards (comprehensive best practices)
-  - Test organization, structure, and CI/CD guidelines
+  - Principle VIII: Standardized Form Validation - Updated to specify Zod v4 explicitly
+Added Sections: None
 Removed Sections: None
 
 Templates Status:
-  ✅ plan-template.md - Already aligned, constitution check validates Maestro requirements
-  ✅ spec-template.md - Already includes user journey focus (maps to Maestro flows)
-  ✅ tasks-template.md - Already prioritizes Maestro tests before implementation
-  ⚠️ CLAUDE.md - Should reference Maestro organization patterns
+  ✅ plan-template.md - Aligned, no changes needed
+  ✅ spec-template.md - Aligned, no changes needed
+  ✅ tasks-template.md - Aligned, no changes needed
+  ✅ CLAUDE.md - Already includes Zod v4 in active technologies
 
-Follow-up TODOs: None
+Follow-up TODOs: None (all forms already migrated to React Hook Form + Zod v4)
 -->
 
 # Sharing Session Maestro Constitution
@@ -76,6 +74,80 @@ Development and production environments MUST be strictly separated:
 - Clerk publishable keys MUST be environment-specific
 
 **Rationale**: Environment separation prevents production data leaks during development and ensures safe testing with development credentials.
+
+### VIII. Standardized Form Validation (React Hook Form + Zod v4)
+
+All forms MUST use React Hook Form for state management and Zod v4 for schema-based validation. Form components MUST:
+- Define validation schemas using Zod v4 API with typed inference
+- Use `useForm` hook with Zod resolver (`zodResolver` from `@hookform/resolvers/zod`)
+- Use React Hook Form's `Controller` component for React Native inputs
+- Provide real-time validation feedback on field changes
+- Display validation errors inline with accessible error messages
+- Leverage TypeScript type inference from Zod schemas
+
+**Version Requirements**:
+- Zod: `^4.0.0` (v4.x.x)
+- React Hook Form: `^7.0.0`
+- @hookform/resolvers: `^5.0.0`
+
+**Implementation Pattern** (React Native):
+```typescript
+import { zodResolver } from '@hookform/resolvers/zod';
+import { Controller, useForm } from 'react-hook-form';
+import { z } from 'zod';
+
+const formSchema = z.object({
+  title: z.string().trim().min(1, 'Title is required').max(100),
+  email: z.email('Invalid email address'),  // Zod v4 simplified API
+});
+
+type FormData = z.infer<typeof formSchema>;
+
+function MyForm() {
+  const {
+    control,
+    handleSubmit,
+    formState: { errors, isSubmitting },
+  } = useForm<FormData>({
+    resolver: zodResolver(formSchema),
+    defaultValues: { title: '', email: '' },
+  });
+
+  const onSubmit = (data: FormData) => {
+    // Type-safe data, already validated
+  };
+
+  return (
+    <Controller
+      control={control}
+      name="email"
+      render={({ field: { onChange, onBlur, value } }) => (
+        <Input
+          value={value}
+          onChangeText={onChange}
+          onBlur={onBlur}
+        />
+      )}
+    />
+  );
+}
+```
+
+**Zod v4 API Changes**:
+- `z.string().email()` instead of `z.string().email(message)`
+- `z.email()` as shorthand for email validation
+- Simplified chaining and method signatures
+- Enhanced type inference and error messages
+
+**Requirements**:
+- Schema definitions MUST be co-located with form components
+- Error messages MUST be user-friendly (not technical jargon)
+- Validation MUST handle edge cases (empty strings, whitespace, special characters)
+- Forms MUST be accessible (proper labels, error announcements)
+- Use `Controller` component for all React Native form inputs
+- Use `isSubmitting` state to disable form during async operations
+
+**Rationale**: React Hook Form provides performant form state management with minimal re-renders. Zod v4 ensures type-safe validation with runtime checking and improved API ergonomics. Together, they eliminate manual validation logic, reduce bugs, and provide excellent TypeScript inference. This standard ensures consistency across all forms and improves developer experience and user experience.
 
 ## Cross-Platform Consistency
 
@@ -451,4 +523,4 @@ All pull requests MUST verify compliance with constitution principles. Code revi
 
 **Runtime Guidance**: For agent-specific development guidance, see `CLAUDE.md` at the project root.
 
-**Version**: 1.1.0 | **Ratified**: 2025-10-26 | **Last Amended**: 2025-10-26
+**Version**: 1.2.1 | **Ratified**: 2025-10-26 | **Last Amended**: 2025-10-29

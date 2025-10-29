@@ -1,359 +1,1053 @@
-# Quick Start: Todo List Feature
+# Developer Quickstart: Todo List Feature
 
-**Feature**: Todo List with Status Management
+**Feature**: Todo List with Status Management (Active, Inactive, Complete)
 **Branch**: `001-todo-list-status`
-**Date**: 2025-10-26
+**Stack**: React Native + Expo + Convex + Clerk + Maestro
+**Date**: 2025-10-29
 
 ## Prerequisites
 
-- Expo development environment set up
-- Clerk authentication configured
-- Project dependencies installed (`pnpm install`)
+Before you begin, ensure you have the following installed and configured:
 
-## Installation
+### Required Tools
 
-### 1. Install New Dependencies
+- **Node.js** (v18 or later)
+- **pnpm** (package manager)
+- **Expo CLI** (installed globally or via npx)
+- **Maestro CLI** (for E2E testing)
+- **Platform-specific tools**:
+  - iOS: Xcode and iOS Simulator (macOS only)
+  - Android: Android Studio and Android Emulator
+  - Web: Modern web browser (Chrome, Safari, Firefox)
 
-Only one new dependency is required for this feature:
+### Required Accounts
 
-```bash
-npx expo install @react-native-community/datetimepicker
-```
+1. **Clerk Account** (Authentication)
+   - Sign up at https://go.clerk.com/blVsQlm
+   - Configure authentication with "Email, phone, username" option
+   - Enable SSO connections: Apple, GitHub, Google
+   - Get publishable keys from https://go.clerk.com/u8KAui7
 
-All other dependencies (Expo Router, lucide-react-native, NativeWind) are already installed.
+2. **Convex Account** (Backend Database)
+   - Sign up at https://convex.dev
+   - Create a new project or use existing one
+   - Get deployment URL (e.g., `https://your-project.convex.cloud`)
 
-### 2. Checkout Feature Branch
-
-```bash
-git checkout 001-todo-list-status
-```
-
-## Running the Feature
-
-### Start Development Server
-
-```bash
-pnpm dev
-```
-
-Then launch your preferred platform:
-- Press `i` for iOS Simulator
-- Press `a` for Android Emulator
-- Press `w` for Web Browser
-
-### Sign In
-
-Use Clerk test credentials:
-- Email: `test+clerk_test@example.com`
-- Password: Any password (min 8 characters)
-- Verification code: `424242`
-
-Or sign in with OAuth (Apple, GitHub, Google).
-
-## Feature Overview
-
-### Tab Navigation
-
-After signing in, you'll see three tabs at the bottom (mobile) or top (web):
-
-1. **Active** - Current todos in progress
-2. **Terlewat (Inactive)** - Missed or skipped todos
-3. **Complete** - Finished todos
-
-### Creating a Todo
-
-1. Tap the **+** button (floating action button or header button)
-2. Fill in the form:
-   - **Icon**: Tap to select from icon grid
-   - **Title**: Required (1-100 characters)
-   - **Description**: Optional (max 500 characters)
-   - **Due Date**: Optional (tap to open datetime picker)
-3. Tap **Save**
-
-The todo appears in the **Active** tab.
-
-### Changing Status
-
-**From Todo Card**:
-- Tap the checkmark icon → Mark as complete
-- Tap the X icon → Mark as inactive (terlewat)
-- Long press → Show status menu with all options
-
-**All Status Transitions**:
-- Active → Complete
-- Active → Inactive
-- Complete → Active (reactivate)
-- Complete → Inactive
-- Inactive → Active (reactivate)
-- Inactive → Complete
-
-### Editing a Todo
-
-1. Tap on a todo card
-2. Edit any field (icon, title, description, due date)
-3. Tap **Save**
-
-Changes apply immediately.
-
-### Deleting a Todo
-
-1. Tap on a todo card
-2. Tap the **Delete** button (red, at bottom of form)
-3. Confirm deletion
-
-Deletion is permanent (no undo).
-
-## Testing with API Routes
-
-### View API Endpoint
-
-API routes are accessible at:
-- **Local**: `http://localhost:8081/api/todos`
-- **Web**: `/api/todos` (relative to app root)
-
-### Test with curl
-
-**List all todos**:
-```bash
-curl -H "Authorization: Bearer YOUR_CLERK_TOKEN" \
-  http://localhost:8081/api/todos
-```
-
-**Create a todo**:
-```bash
-curl -X POST \
-  -H "Content-Type: application/json" \
-  -H "Authorization: Bearer YOUR_CLERK_TOKEN" \
-  -d '{"title":"Test todo","icon":"CheckSquare"}' \
-  http://localhost:8081/api/todos
-```
-
-**Change status**:
-```bash
-curl -X PATCH \
-  -H "Content-Type: application/json" \
-  -H "Authorization: Bearer YOUR_CLERK_TOKEN" \
-  -d '{"status":"complete"}' \
-  http://localhost:8081/api/todos/TODO_ID/status
-```
-
-**Delete a todo**:
-```bash
-curl -X DELETE \
-  -H "Authorization: Bearer YOUR_CLERK_TOKEN" \
-  http://localhost:8081/api/todos/TODO_ID
-```
-
-> **Note**: Replace `YOUR_CLERK_TOKEN` with actual token from Clerk SDK. In the app, this is handled automatically.
-
-### Dummy Data
-
-The API uses in-memory storage with sample data:
-- On first access, each user gets 3-5 sample todos
-- Data persists during app session only
-- Restarting the app resets to sample data
-
-## Maestro Testing
-
-### Install Maestro
+### Install Maestro CLI
 
 ```bash
 curl -Ls "https://get.maestro.mobile.dev" | bash
 ```
 
-### Run Tests
-
-**All tests**:
+Verify installation:
 ```bash
-maestro test .maestro/flows
+maestro --version
 ```
 
-**Single test flow**:
+## Initial Setup
+
+### 1. Clone and Install Dependencies
+
 ```bash
-maestro test .maestro/flows/todos/create-todo.yaml
+# Clone the repository
+git clone <repository-url>
+cd sharing-session-maestro
+
+# Checkout feature branch
+git checkout 001-todo-list-status
+
+# Install dependencies
+pnpm install
 ```
 
-**Smoke tests only** (fast, critical paths):
+### 2. Configure Clerk Authentication
+
+Create environment files from the example:
+
 ```bash
-maestro test .maestro/flows --includeTags smokeTest
+cp .env.example .env.development
+cp .env.example .env.production
 ```
 
-**Feature-specific tests**:
+Edit `.env.development` and add your Clerk publishable key:
+
 ```bash
-maestro test .maestro/flows --includeTags todos
+EXPO_PUBLIC_CLERK_PUBLISHABLE_KEY=pk_test_YOUR_DEVELOPMENT_KEY
 ```
 
-**Test flows included**:
-1. **todos/create-todo.yaml** - Create new todo with all fields (smokeTest)
-2. **todos/change-status-complete.yaml** - Mark active todo as complete (smokeTest)
-3. **todos/change-status-inactive.yaml** - Mark active todo as inactive
-4. **todos/reactivate-from-complete.yaml** - Reactivate completed todo
-5. **todos/reactivate-from-inactive.yaml** - Reactivate inactive todo
-6. **todos/edit-todo.yaml** - Edit existing todo
-7. **todos/delete-todo.yaml** - Delete existing todo
-8. **common/setup-auth.yaml** - Reusable auth setup (NOT executed as test)
+Edit `.env.production` with production key:
 
-### Test Flow Examples
+```bash
+EXPO_PUBLIC_CLERK_PUBLISHABLE_KEY=pk_live_YOUR_PRODUCTION_KEY
+```
 
-**Create Todo Test** (`.maestro/flows/todos/create-todo.yaml`):
-1. Run common auth setup (runFlow: ../common/setup-auth.yaml)
-2. Navigate to Active tab
-3. Tap create button
-4. Fill form (icon, title, description, due date)
-5. Submit form
-6. Verify todo appears in Active tab
+**Important**: Never commit `.env` files (they are gitignored).
 
-**Change Status Test** (`.maestro/flows/todos/change-status-complete.yaml`):
-1. Run common auth setup
-2. Create a todo (inline or via subflow)
-3. Mark as complete
-4. Verify todo moves to Complete tab
+### 3. Configure Convex Backend
 
-**Reactivate Test** (`.maestro/flows/todos/reactivate-from-inactive.yaml`):
-1. Run common auth setup
-2. Create an inactive todo
-3. Long press to show status menu
-4. Select "Active"
-5. Verify todo moves to Active tab
+#### Step 1: Initialize Convex
+
+```bash
+npx convex dev
+```
+
+This will:
+- Create a new Convex project (or link to existing)
+- Generate `.env.local` with Convex deployment URL
+- Start the Convex development server
+- Watch for schema and function changes
+
+#### Step 2: Set Up Clerk JWT Template
+
+1. Go to **Clerk Dashboard** → **Configure** → **JWT Templates**
+2. Click **+ New template** → Select **Convex**
+3. Name the template: `convex` (MUST be lowercase "convex")
+4. Copy the **Issuer URL** (e.g., `https://verb-noun-00.clerk.accounts.dev`)
+5. Go to your **Convex Dashboard** → **Settings** → **Environment Variables**
+6. Add environment variable:
+   - **Key**: `CLERK_JWT_ISSUER_DOMAIN`
+   - **Value**: Your Clerk issuer URL (from step 4)
+
+#### Step 3: Verify Convex Setup
+
+Check that the following files exist:
+- `convex/schema.ts` - Database schema (todos table)
+- `convex/todos.ts` - Backend queries and mutations
+- `convex/auth.config.ts` - Clerk authentication config
+
+### 4. Start Development Environment
+
+```bash
+# Start Expo dev server (automatically copies .env.development to .env)
+pnpm dev
+```
+
+In another terminal, ensure Convex is running:
+
+```bash
+# Start Convex dev server (if not already running)
+npx convex dev
+```
+
+### 5. Launch Your Platform
+
+From the Expo dev server terminal:
+
+- Press `i` for **iOS Simulator** (macOS only)
+- Press `a` for **Android Emulator**
+- Press `w` for **Web Browser**
+
+Or use platform-specific commands:
+
+```bash
+pnpm ios      # iOS development build
+pnpm android  # Android development build
+pnpm web      # Web development build
+```
+
+## Development Workflow (TDD with Maestro)
+
+This project follows **Test-Driven Development** principles with Maestro E2E tests.
+
+### TDD Cycle
+
+#### 1. Red Phase - Write Failing Test
+
+Create a new Maestro test flow that describes the expected behavior:
+
+```bash
+# Example: Create test for new feature
+touch .maestro/flows/todos/my-new-feature.yaml
+```
+
+Write the test flow:
+
+```yaml
+appId: ${APP_ID}
+tags:
+  - todos
+---
+# Test: My New Feature
+# Purpose: Verify new feature works as expected
+
+- runFlow:
+    when:
+      visible: "Sign in to .*"
+    file: ../common/setup-auth.yaml
+
+- tapOn: "My New Button"
+- assertVisible: "Expected Result"
+```
+
+Run the test (it should fail):
+
+```bash
+maestro test .maestro/flows/todos/my-new-feature.yaml -e APP_ID=com.anonymous.sharingsessionmaestro
+```
+
+#### 2. Green Phase - Implement Feature
+
+Implement the minimum code to make the test pass:
+
+1. **Update Convex Schema** (if needed):
+   - Edit `convex/schema.ts` to add new fields or tables
+
+2. **Create/Update Backend Functions**:
+   - Edit `convex/todos.ts` for queries/mutations
+   - Use Convex validators (`v.string()`, `v.union()`, etc.)
+
+3. **Build UI Components**:
+   - Create components in `components/todo/`
+   - Use React Native Reusables for UI primitives
+   - Style with NativeWind (Tailwind classes)
+
+4. **Connect Frontend to Backend**:
+   - Use `useQuery()` for reading data
+   - Use `useMutation()` for creating/updating data
+   - Import from `convex/react`
+
+Example:
+
+```typescript
+import { useQuery, useMutation } from 'convex/react';
+import { api } from '@/convex/_generated/api';
+
+export default function MyComponent() {
+  // Query data
+  const todos = useQuery(api.todos.list);
+
+  // Mutation for creating
+  const createTodo = useMutation(api.todos.create);
+
+  const handleCreate = async () => {
+    await createTodo({
+      title: "New Todo",
+      description: "Description",
+      icon: "CheckSquare",
+      dueDate: new Date().toISOString(),
+    });
+  };
+
+  return (/* UI */);
+}
+```
+
+Run the test again:
+
+```bash
+maestro test .maestro/flows/todos/my-new-feature.yaml -e APP_ID=com.anonymous.sharingsessionmaestro
+```
+
+#### 3. Refactor Phase - Improve Code Quality
+
+Once tests are green:
+
+1. **Clean up code**:
+   - Remove duplication
+   - Extract reusable components
+   - Improve naming and organization
+
+2. **Run linter**:
+   ```bash
+   pnpm lint
+   pnpm lint:fix  # Auto-fix issues
+   ```
+
+3. **Format code**:
+   ```bash
+   pnpm format
+   pnpm format:fix  # Apply unsafe fixes
+   ```
+
+4. **Re-run tests** to ensure refactoring didn't break anything:
+   ```bash
+   maestro test .maestro/flows/todos/
+   ```
+
+### TDD Best Practices
+
+- Write tests BEFORE implementation
+- Keep tests focused on user behavior (not implementation details)
+- Use descriptive test names and comments
+- Run tests frequently during development
+- Commit tests alongside feature code
 
 ## Project Structure
 
-```text
-app/
-├── (tabs)/
-│   ├── _layout.tsx        # Tab configuration
-│   ├── active.tsx         # Active todos screen
-│   ├── inactive.tsx       # Inactive/terlewat screen
-│   └── complete.tsx       # Complete todos screen
-├── todo/
-│   ├── new.tsx            # Create todo modal
-│   └── [id].tsx           # Edit todo screen
-└── api/todos/
-    ├── index+api.ts       # GET /api/todos, POST /api/todos
-    ├── [id]+api.ts        # GET/PUT/DELETE /api/todos/:id
-    └── [id]/status+api.ts # PATCH /api/todos/:id/status
+### Directory Layout
 
-components/todo/
-├── todo-list.tsx          # List component
-├── todo-card.tsx          # Individual todo card
-├── todo-form.tsx          # Form with all fields
-├── icon-picker.tsx        # Icon selection grid
-├── datetime-picker.tsx    # Datetime picker wrapper
-└── empty-state.tsx        # Empty state UI
-
-lib/types/
-└── todo.ts                # TypeScript interfaces
-
-.maestro/
-├── flows/
-│   ├── todos/                       # Feature-based test organization
-│   │   ├── create-todo.yaml         # Create todo test (smokeTest)
-│   │   ├── change-status-complete.yaml
-│   │   ├── change-status-inactive.yaml
-│   │   ├── reactivate-from-complete.yaml
-│   │   ├── reactivate-from-inactive.yaml
-│   │   ├── edit-todo.yaml
-│   │   └── delete-todo.yaml
-│   └── common/                      # Reusable utility flows (NOT executed)
-│       └── setup-auth.yaml          # Clerk auth setup
-└── config.yaml                      # Test suite config (tags, exclusions)
+```
+sharing-session-maestro/
+├── app/                           # Expo Router screens
+│   ├── (tabs)/                    # Bottom tab navigation
+│   │   ├── _layout.tsx            # Tab configuration
+│   │   ├── active.tsx             # Active todos screen
+│   │   ├── inactive.tsx           # Inactive/terlewat screen
+│   │   └── complete.tsx           # Complete todos screen
+│   ├── (auth)/                    # Authentication screens
+│   │   ├── sign-in.tsx            # Sign in form
+│   │   └── sign-up/               # Sign up flow
+│   ├── todo/
+│   │   └── new.tsx                # Create todo modal
+│   ├── _layout.tsx                # Root layout with providers
+│   └── index.tsx                  # Main screen (redirects to active)
+│
+├── components/                    # React components
+│   ├── todo/                      # Todo feature components
+│   │   ├── todo-list.tsx          # List component
+│   │   ├── todo-card.tsx          # Individual todo card
+│   │   ├── todo-form.tsx          # Form with all fields
+│   │   ├── icon-picker.tsx        # Icon selection grid
+│   │   ├── datetime-picker.tsx    # Datetime picker wrapper
+│   │   └── empty-state.tsx        # Empty state UI
+│   ├── ui/                        # Reusable UI primitives
+│   │   ├── button.tsx             # Button component
+│   │   ├── input.tsx              # Input field
+│   │   └── ...                    # Other UI components
+│   ├── sign-in-form.tsx           # Auth forms
+│   ├── user-menu.tsx              # User profile dropdown
+│   └── theme-toggle.tsx           # Light/dark mode switcher
+│
+├── convex/                        # Convex backend
+│   ├── schema.ts                  # Database schema (todos table)
+│   ├── todos.ts                   # Todo queries & mutations
+│   ├── auth.config.ts             # Clerk JWT integration
+│   └── _generated/                # Auto-generated types (DO NOT EDIT)
+│       ├── api.d.ts               # API types
+│       ├── dataModel.d.ts         # Data model types
+│       └── server.d.ts            # Server types
+│
+├── lib/                           # Shared utilities
+│   ├── types/
+│   │   └── todo.ts                # TypeScript types & constants
+│   ├── utils.ts                   # Utility functions (cn, etc.)
+│   ├── constants.ts               # App constants
+│   ├── theme.ts                   # Theme configuration
+│   └── oauth-utils.ts             # OAuth helpers
+│
+├── .maestro/                      # Maestro E2E tests
+│   └── flows/
+│       ├── todos/                 # Todo feature tests
+│       │   ├── create-todo.yaml   # Create todo (smokeTest)
+│       │   ├── calculate-datetime.js  # Date calculation helper
+│       │   └── validate-missing-fields.yaml
+│       └── common/                # Reusable flows
+│           └── setup-auth.yaml    # Auth setup flow
+│
+├── specs/                         # Feature specifications
+│   └── 001-todo-list-status/      # This feature's docs
+│       ├── quickstart.md          # This file
+│       ├── spec.md                # Feature specification
+│       ├── tasks.md               # Implementation tasks
+│       └── data-model.md          # Data model documentation
+│
+├── .env.development               # Development environment vars
+├── .env.production                # Production environment vars
+├── .env.example                   # Environment template
+├── CLAUDE.md                      # Project instructions for Claude
+└── package.json                   # Dependencies and scripts
 ```
 
-## Common Tasks
+### Key Files & Responsibilities
 
-### Add a New Icon Option
+#### Convex Backend
 
-1. Edit `lib/types/todo.ts`
-2. Add icon name to `TODO_ICON_OPTIONS` array
-3. Icon will automatically appear in icon picker
+- **`convex/schema.ts`**: Database schema definition
+  - Defines `todos` table structure
+  - Sets up indexes for efficient queries
+  - Enforces data types with Convex validators
 
-### Change Default Icon
+- **`convex/todos.ts`**: Backend business logic
+  - `list()` - Query all todos for authenticated user
+  - `listByStatus()` - Query todos filtered by status
+  - `create()` - Create new todo with validation
+  - All functions require Clerk authentication
 
-1. Edit `components/todo/todo-form.tsx`
-2. Update `useState` initial value for icon
-3. Or update in `lib/types/todo.ts` interface default
+- **`convex/auth.config.ts`**: Authentication configuration
+  - Integrates Clerk JWT with Convex
+  - Uses `CLERK_JWT_ISSUER_DOMAIN` environment variable
 
-### Modify Sample Data
+#### Frontend Components
 
-1. Edit `app/api/todos/index+api.ts`
-2. Find `getTodosForUser` function
-3. Modify sample todos array
+- **`components/todo/todo-form.tsx`**: Todo creation/editing form
+  - Icon picker integration
+  - Title, description, due date fields
+  - Form validation (client-side)
 
-### Change Tab Order
+- **`components/todo/todo-card.tsx`**: Individual todo display
+  - Shows title, description, icon, due date
+  - Status badge (Active/Inactive/Complete)
+  - Quick actions for status changes
 
-1. Edit `app/(tabs)/_layout.tsx`
-2. Reorder `<Tabs.Screen>` components
-3. Tabs render in file order
+- **`components/todo/icon-picker.tsx`**: Icon selection UI
+  - Grid of Lucide icons
+  - Defined in `TODO_ICON_OPTIONS`
+
+- **`components/todo/datetime-picker.tsx`**: Date/time picker
+  - Native picker on iOS/Android
+  - HTML5 input on web
+  - Platform-specific implementation
+
+#### Screens
+
+- **`app/(tabs)/active.tsx`**: Active todos tab
+  - Queries: `api.todos.listByStatus({ status: 'active' })`
+  - Shows floating action button (FAB) for create
+
+- **`app/(tabs)/inactive.tsx`**: Inactive todos tab
+  - Queries: `api.todos.listByStatus({ status: 'inactive' })`
+
+- **`app/(tabs)/complete.tsx`**: Complete todos tab
+  - Queries: `api.todos.listByStatus({ status: 'complete' })`
+
+- **`app/todo/new.tsx`**: Create todo modal
+  - Uses `TodoForm` component
+  - Calls `api.todos.create` mutation
+
+#### Types & Constants
+
+- **`lib/types/todo.ts`**: TypeScript definitions
+  - `Todo` interface
+  - `TodoStatus` type
+  - `TODO_ICON_OPTIONS` array
+
+## Testing Strategy
+
+### Test Organization
+
+Tests are organized by feature in `.maestro/flows/`:
+
+```
+.maestro/flows/
+├── todos/                         # Todo feature tests
+│   ├── create-todo.yaml           # SMOKE TEST: Create todo
+│   ├── validate-missing-fields.yaml
+│   └── calculate-datetime.js      # JavaScript helper for date math
+├── auth/                          # Authentication tests
+│   ├── sign-in.yaml
+│   └── sign-up.yaml
+└── common/                        # Reusable flows (NOT executed)
+    └── setup-auth.yaml            # Auth setup subflow
+```
+
+### Running Tests
+
+#### Run All Tests
+
+```bash
+maestro test .maestro/flows -e APP_ID=com.anonymous.sharingsessionmaestro
+```
+
+#### Run Smoke Tests Only (Fast, Critical Paths)
+
+```bash
+maestro test .maestro/flows --includeTags smokeTest -e APP_ID=com.anonymous.sharingsessionmaestro
+```
+
+Smoke tests include:
+- `create-todo.yaml` - Create todo with all required fields
+
+#### Run Feature-Specific Tests
+
+```bash
+# Todo feature tests only
+maestro test .maestro/flows --includeTags todos -e APP_ID=com.anonymous.sharingsessionmaestro
+
+# Auth tests only
+maestro test .maestro/flows --includeTags auth -e APP_ID=com.anonymous.sharingsessionmaestro
+```
+
+#### Run Single Test Flow
+
+```bash
+maestro test .maestro/flows/todos/create-todo.yaml -e APP_ID=com.anonymous.sharingsessionmaestro
+```
+
+### Test Environment Variables
+
+Set `APP_ID` based on your platform:
+
+- **iOS**: `com.anonymous.sharingsessionmaestro`
+- **Android**: `com.anonymous.sharingsessionmaestro`
+- **Web**: Use URL instead of APP_ID (not yet configured)
+
+### Debugging Failed Tests
+
+1. **Run test with debug output**:
+   ```bash
+   maestro test .maestro/flows/todos/create-todo.yaml -e APP_ID=com.anonymous.sharingsessionmaestro --debug-output
+   ```
+
+2. **Check Maestro logs**:
+   - Look for assertion failures
+   - Check element IDs (testID props)
+   - Verify timing issues (add delays if needed)
+
+3. **Verify app state**:
+   - Ensure user is authenticated
+   - Check Convex dashboard for data
+   - Look at console logs in terminal
+
+4. **Common issues**:
+   - **Element not found**: Check testID in component
+   - **Timing issues**: Add `- wait: 1000` before assertions
+   - **Auth failures**: Verify Clerk keys in `.env.development`
+
+### Test Coverage
+
+Current test flows:
+
+1. **create-todo.yaml** (smokeTest, todos)
+   - Authenticate user
+   - Navigate to Active tab
+   - Fill in all required fields (title, description, icon, due date)
+   - Submit form
+   - Verify success message
+   - Verify todo appears in Active tab
+
+2. **validate-missing-fields.yaml** (todos)
+   - Test form validation
+   - Verify error messages for missing fields
+
+### Writing New Tests
+
+Follow this template:
+
+```yaml
+appId: ${APP_ID}
+tags:
+  - smokeTest  # If critical path
+  - todos      # Feature tag
+---
+# Test: [Feature Name]
+#
+# Purpose: [What this test verifies]
+#
+# Prerequisites:
+# - [What needs to be set up]
+#
+# Test Steps:
+# 1. [Step 1]
+# 2. [Step 2]
+# ...
+
+# Authenticate user (if needed)
+- runFlow:
+    when:
+      visible: "Sign in to .*"
+    file: ../common/setup-auth.yaml
+
+# Test steps
+- tapOn: "Button ID"
+- inputText: "Sample text"
+- assertVisible: "Expected text"
+```
+
+## Common Development Tasks
+
+### Add a New Icon to Icon Picker
+
+1. **Check available Lucide icons**: https://lucide.dev/icons/
+2. **Edit `lib/types/todo.ts`**:
+   ```typescript
+   export const TODO_ICON_OPTIONS = [
+     'CheckSquare',
+     'Calendar',
+     // ... existing icons
+     'NewIconName',  // Add new icon
+   ] as const;
+   ```
+3. Icon automatically appears in icon picker grid
+4. No component changes needed
+
+### Add a New Todo Field
+
+#### Backend (Convex)
+
+1. **Update schema** (`convex/schema.ts`):
+   ```typescript
+   export default defineSchema({
+     todos: defineTable({
+       userId: v.string(),
+       title: v.string(),
+       description: v.string(),
+       icon: v.string(),
+       status: v.union(v.literal('active'), v.literal('inactive'), v.literal('complete')),
+       dueDate: v.string(),
+       newField: v.string(),  // Add new field
+       createdAt: v.string(),
+       updatedAt: v.string(),
+     })
+       .index('by_user', ['userId'])
+       .index('by_user_and_status', ['userId', 'status']),
+   });
+   ```
+
+2. **Update mutation** (`convex/todos.ts`):
+   ```typescript
+   export const create = mutation({
+     args: {
+       title: v.string(),
+       description: v.string(),
+       icon: v.string(),
+       dueDate: v.string(),
+       newField: v.string(),  // Add to args
+     },
+     handler: async (ctx, args) => {
+       // ... validation
+
+       await ctx.db.insert('todos', {
+         userId: identity.subject,
+         title: args.title,
+         description: args.description,
+         icon: args.icon,
+         status: 'active',
+         dueDate: args.dueDate,
+         newField: args.newField,  // Add to insert
+         createdAt: now,
+         updatedAt: now,
+       });
+     },
+   });
+   ```
+
+#### Frontend
+
+3. **Update TypeScript type** (`lib/types/todo.ts`):
+   ```typescript
+   export interface Todo {
+     _id: Id<"todos">;
+     userId: string;
+     title: string;
+     description: string;
+     icon: string;
+     status: TodoStatus;
+     dueDate: string;
+     newField: string;  // Add to interface
+     createdAt: string;
+     updatedAt: string;
+   }
+   ```
+
+4. **Update form component** (`components/todo/todo-form.tsx`):
+   ```typescript
+   const [newField, setNewField] = useState('');
+
+   // Add input field to form JSX
+   <Input
+     value={newField}
+     onChangeText={setNewField}
+     placeholder="New field"
+   />
+
+   // Update submit handler
+   const handleSubmit = async () => {
+     await createTodo({
+       title,
+       description,
+       icon,
+       dueDate,
+       newField,  // Include in mutation call
+     });
+   };
+   ```
+
+5. **Update todo card** (`components/todo/todo-card.tsx`):
+   ```typescript
+   // Display new field
+   <Text>{todo.newField}</Text>
+   ```
+
+### Add a New Todo Status
+
+1. **Update schema** (`convex/schema.ts`):
+   ```typescript
+   status: v.union(
+     v.literal('active'),
+     v.literal('inactive'),
+     v.literal('complete'),
+     v.literal('newStatus')  // Add new status
+   ),
+   ```
+
+2. **Update TypeScript type** (`lib/types/todo.ts`):
+   ```typescript
+   export type TodoStatus = 'active' | 'inactive' | 'complete' | 'newStatus';
+   ```
+
+3. **Create new tab screen** (`app/(tabs)/newStatus.tsx`):
+   ```typescript
+   import { useQuery } from 'convex/react';
+   import { api } from '@/convex/_generated/api';
+
+   export default function NewStatusScreen() {
+     const todos = useQuery(api.todos.listByStatus, { status: 'newStatus' });
+
+     return (
+       <TodoList todos={todos} emptyMessage="No new status todos" />
+     );
+   }
+   ```
+
+4. **Add tab to navigation** (`app/(tabs)/_layout.tsx`):
+   ```typescript
+   <Tabs.Screen
+     name="newStatus"
+     options={{
+       title: 'New Status',
+       tabBarIcon: ({ color }) => <Icon name="NewIcon" color={color} />,
+     }}
+   />
+   ```
+
+### Update Validation Rules
+
+Edit `convex/todos.ts` mutation handlers:
+
+```typescript
+export const create = mutation({
+  args: { /* ... */ },
+  handler: async (ctx, args) => {
+    // Example: Change title max length
+    if (trimmedTitle.length > 200) {  // Changed from 100
+      throw new Error('Title must be 200 characters or less');
+    }
+
+    // Example: Make description optional
+    if (args.description && args.description.length > 500) {
+      throw new Error('Description must be 500 characters or less');
+    }
+
+    // ... rest of validation
+  },
+});
+```
+
+### Debug Convex Queries
+
+1. **Check Convex Dashboard**:
+   - Go to https://dashboard.convex.dev
+   - Select your project
+   - View **Data** tab to see todos table
+   - View **Logs** tab for function calls and errors
+
+2. **Add console logs** (convex/todos.ts):
+   ```typescript
+   export const list = query({
+     args: {},
+     handler: async (ctx) => {
+       const identity = await ctx.auth.getUserIdentity();
+       console.log('User ID:', identity?.subject);  // Logs appear in Convex dashboard
+
+       const todos = await ctx.db
+         .query('todos')
+         .withIndex('by_user', (q) => q.eq('userId', identity!.subject))
+         .collect();
+
+       console.log('Found todos:', todos.length);
+       return todos;
+     },
+   });
+   ```
+
+3. **Test queries in Convex dashboard**:
+   - Go to **Functions** tab
+   - Select a query/mutation
+   - Click **Run** with test arguments
+   - View results and logs
+
+### Test Authentication in Development
+
+Use Clerk's special test credentials (no actual email/SMS sent):
+
+#### Test Email Addresses
+
+- Format: `[name]+clerk_test@example.com`
+- Example: `john+clerk_test@example.com`
+- Verification code: Always `424242`
+
+#### Test Phone Numbers
+
+- Pattern: `+1 (XXX) 555-0100` to `+1 (XXX) 555-0199`
+- Example: `+1 (201) 555-0123`
+- Verification code: Always `424242`
+
+#### Quick Test Flow
+
+1. Sign up with `test+clerk_test@example.com`
+2. Use any password (minimum 8 characters)
+3. Enter verification code: `424242`
+4. Check console logs for auth flow details
 
 ## Troubleshooting
 
-### Issue: "No todos" in all tabs
+### Issue: Convex Functions Not Working
 
-**Cause**: API route not initialized for user
+**Symptoms**:
+- "Unauthenticated" errors
+- Empty todo lists
+- Mutations failing silently
 
-**Solution**:
-1. Sign out and sign back in
-2. Or restart the app (`pnpm dev`)
-3. Sample data will reinitialize
+**Solutions**:
 
-### Issue: DateTime picker not showing
+1. **Check Clerk JWT template**:
+   - Verify template name is exactly `convex` (lowercase)
+   - Copy Issuer URL from Clerk dashboard
+   - Add to Convex environment variables as `CLERK_JWT_ISSUER_DOMAIN`
 
-**Platform**: Web
+2. **Verify authentication**:
+   ```typescript
+   // In your component
+   const { isSignedIn, userId } = useAuth();
+   console.log('Signed in:', isSignedIn, 'User ID:', userId);
+   ```
 
-**Cause**: Web uses HTML5 input, may not be supported in all browsers
+3. **Check Convex logs**:
+   - Go to Convex dashboard → Logs
+   - Look for authentication errors
 
-**Solution**:
-1. Use Chrome/Safari/Firefox (modern versions)
-2. Or test on mobile (iOS/Android) where native picker is used
+### Issue: Schema Changes Not Applying
 
-### Issue: Icons not rendering
+**Symptoms**:
+- New fields not appearing in database
+- TypeScript errors about missing properties
 
-**Cause**: Icon name not in `TODO_ICON_OPTIONS`
+**Solutions**:
 
-**Solution**:
-1. Check `lib/types/todo.ts` for valid icon names
-2. Or add new icon to `TODO_ICON_OPTIONS`
+1. **Restart Convex dev server**:
+   ```bash
+   # Stop current process (Ctrl+C)
+   npx convex dev
+   ```
 
-### Issue: Status change not persisting
+2. **Clear and rebuild**:
+   ```bash
+   rm -rf convex/_generated
+   npx convex dev
+   ```
 
-**Cause**: In-memory storage resets on app restart
+3. **Check for schema errors**:
+   - Look at terminal running `npx convex dev`
+   - Fix any validation errors in `convex/schema.ts`
 
-**Expected Behavior**: This is intentional for dummy data phase
+### Issue: Todos Not Persisting
 
-**Future Enhancement**: Replace with AsyncStorage or database
+**Symptoms**:
+- Todos disappear after refresh
+- Changes not saving
+
+**Cause**: Unlike the old in-memory API routes, Convex persists data automatically.
+
+**Solutions**:
+
+1. **Check Convex connection**:
+   - Ensure `npx convex dev` is running
+   - Check `.env.local` has `CONVEX_URL`
+
+2. **Verify mutations are called**:
+   ```typescript
+   const createTodo = useMutation(api.todos.create);
+
+   const handleCreate = async () => {
+     try {
+       const id = await createTodo({ /* args */ });
+       console.log('Created todo:', id);
+     } catch (error) {
+       console.error('Create failed:', error);
+     }
+   };
+   ```
+
+3. **Check Convex dashboard**:
+   - View Data tab → todos table
+   - Verify records exist
+
+### Issue: Maestro Tests Failing
+
+**Symptoms**:
+- Timeout errors
+- Element not found errors
+- Assertion failures
+
+**Solutions**:
+
+1. **Check app is running**:
+   ```bash
+   pnpm dev
+   # Wait for "Metro waiting on exp://..."
+   # Launch iOS/Android before running tests
+   ```
+
+2. **Verify testID props**:
+   - Check component has `testID` attribute
+   - Use exact ID in Maestro test
+   ```typescript
+   <Button testID="create-todo-submit">Submit</Button>
+   ```
+
+3. **Add delays for async operations**:
+   ```yaml
+   - tapOn: "Submit"
+   - wait: 1000  # Wait for API call
+   - assertVisible: "Success"
+   ```
+
+4. **Run with debug output**:
+   ```bash
+   maestro test .maestro/flows/todos/create-todo.yaml --debug-output
+   ```
+
+### Issue: DateTime Picker Not Showing (Web)
+
+**Cause**: Web uses HTML5 datetime-local input
+
+**Solutions**:
+
+1. Use modern browser (Chrome, Safari, Firefox latest)
+2. Test on iOS/Android for native picker
+3. Check browser console for errors
+
+### Issue: Icons Not Rendering
+
+**Symptoms**:
+- Blank squares instead of icons
+- "Icon not found" errors
+
+**Solutions**:
+
+1. **Verify icon name in `TODO_ICON_OPTIONS`**:
+   ```typescript
+   // lib/types/todo.ts
+   export const TODO_ICON_OPTIONS = [
+     'CheckSquare',  // Must match Lucide icon name exactly
+     'Calendar',
+     // ...
+   ] as const;
+   ```
+
+2. **Check icon is from Lucide**:
+   - Search at https://lucide.dev/icons/
+   - Use exact name from Lucide docs
+
+3. **Verify icon picker import**:
+   ```typescript
+   import { CheckSquare, Calendar } from 'lucide-react-native';
+   ```
 
 ## Performance Tips
 
-1. **Many Todos**: Performance tested up to 100 todos per status (per success criteria)
-2. **List Virtualization**: If > 100 todos, consider `FlashList` instead of `ScrollView`
-3. **API Caching**: Consider React Query for optimistic updates (future enhancement)
+1. **Query Optimization**:
+   - Use `listByStatus` for filtered views (faster than client-side filtering)
+   - Convex automatically optimizes queries with indexes
+
+2. **Real-time Updates**:
+   - `useQuery` automatically subscribes to changes
+   - No manual polling needed
+
+3. **Optimistic Updates** (future enhancement):
+   - Use Convex's built-in optimistic updates
+   - See: https://docs.convex.dev/client/react/optimistic-updates
+
+4. **Large Lists** (>100 todos):
+   - Consider pagination with `limit()` and `skip()`
+   - Or use FlashList for virtualization
 
 ## Next Steps
 
-After testing the feature:
+After setting up and testing the feature:
 
-1. **Review Code**: Check components follow project conventions
-2. **Run Linter**: `pnpm lint` (Biome)
-3. **Format Code**: `pnpm format` (Biome)
-4. **Run Maestro Tests**: Ensure all tests pass
-5. **Create PR**: Use `/speckit.implement` for task tracking
+1. **Run all tests**:
+   ```bash
+   maestro test .maestro/flows --includeTags smokeTest
+   ```
+
+2. **Code quality checks**:
+   ```bash
+   pnpm lint
+   pnpm format
+   ```
+
+3. **Review feature specification**:
+   - Read `specs/001-todo-list-status/spec.md`
+   - Check `specs/001-todo-list-status/tasks.md` for implementation details
+
+4. **Explore Convex dashboard**:
+   - View data in todos table
+   - Monitor function logs
+   - Check performance metrics
 
 ## Resources
 
-- [Expo API Routes Docs](https://docs.expo.dev/router/reference/api-routes/)
-- [Expo Router Tabs](https://docs.expo.dev/router/advanced/tabs/)
-- [React Native DateTime Picker](https://github.com/react-native-datetimepicker/datetimepicker)
-- [Lucide Icons](https://lucide.dev/icons/)
-- [Maestro Documentation](https://maestro.mobile.dev/)
+### Documentation
 
-## Getting Help
+- **Convex**: https://docs.convex.dev
+  - React integration: https://docs.convex.dev/client/react
+  - Authentication: https://docs.convex.dev/auth/clerk
+  - Schema definition: https://docs.convex.dev/database/schemas
+
+- **Clerk**: https://clerk.com/docs
+  - JWT templates: https://clerk.com/docs/backend-requests/making/jwt-templates
+  - React Native: https://clerk.com/docs/quickstarts/expo
+
+- **Expo Router**: https://docs.expo.dev/router/introduction/
+  - File-based routing: https://docs.expo.dev/router/create-pages/
+  - Tabs navigation: https://docs.expo.dev/router/advanced/tabs/
+
+- **Maestro**: https://maestro.mobile.dev
+  - Writing flows: https://maestro.mobile.dev/getting-started/writing-your-first-flow
+  - Best practices: https://maestro.mobile.dev/best-practices/flows
+
+- **React Native Reusables**: https://rnr-docs.vercel.app
+- **Lucide Icons**: https://lucide.dev/icons/
+- **NativeWind**: https://www.nativewind.dev
+
+### Getting Help
 
 **Issue**: Feature not working as expected
 
 **Steps**:
-1. Check console for error messages
-2. Verify Clerk authentication is working
-3. Test API routes with curl
-4. Check Maestro test results
+1. Check console for error messages (both Expo and Convex terminals)
+2. Verify Clerk authentication (check Clerk dashboard)
+3. Check Convex dashboard for data and logs
+4. Review Maestro test results
+5. Consult `CLAUDE.md` for project conventions
 
-**Contact**: Refer to project CLAUDE.md for development guidelines
+**Need Support?**
+- Check `specs/001-todo-list-status/spec.md` for requirements
+- Review `specs/001-todo-list-status/data-model.md` for schema details
+- See `specs/001-todo-list-status/tasks.md` for implementation checklist
+
+## Summary
+
+This quickstart guide covers:
+
+- Complete setup from zero to running app
+- TDD workflow with Maestro
+- Project structure and key files
+- Testing strategy and commands
+- Common development tasks
+- Troubleshooting common issues
+
+**Quick Reference Commands**:
+
+```bash
+# Setup
+pnpm install
+npx convex dev
+pnpm dev
+
+# Testing
+maestro test .maestro/flows --includeTags smokeTest
+maestro test .maestro/flows/todos/create-todo.yaml
+
+# Code Quality
+pnpm lint
+pnpm format
+
+# Platform-specific
+pnpm ios      # iOS
+pnpm android  # Android
+pnpm web      # Web
+```
+
+Happy coding!

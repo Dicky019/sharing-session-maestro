@@ -10,12 +10,13 @@ This directory contains automated UI tests for the Todo app using Maestro mobile
 ├── README.md                   # This file
 └── flows/
     ├── auth/                   # Authentication flows
+    │   ├── credentials.js     # JavaScript: Test credentials helper
     │   ├── sign-in.yaml       # Sign in with existing account
     │   ├── sign-up.yaml       # Complete registration flow
     │   └── sign-out.yaml      # Utility: Sign out current user
     └── todos/                  # Todo management flows
         ├── create-todo.yaml   # Create new todo with all fields
-        └── calculate-datetime.js  # Helper: Calculate dates for tests
+        └── calculate-datetime.js  # JavaScript: Calculate dates for tests
 ```
 
 ## 🚀 Running Tests
@@ -74,15 +75,17 @@ maestro test .maestro -e APP_ID=com.ios.diki.sharingsessionmaestro --continuous
 Tests the complete sign-in flow for existing users.
 
 **Test Data:**
+- Loaded from `credentials.js` JavaScript helper
 - Email: `test+clerk_test@example.com`
 - Password: `TestPassword123!`
 
 **Steps:**
-1. Launch app
-2. Sign out if already logged in
-3. Fill in credentials
-4. Submit form
-5. Verify successful authentication
+1. Load test credentials from JavaScript
+2. Launch app
+3. Sign out if already logged in
+4. Fill in credentials from script output
+5. Submit form
+6. Verify successful authentication
 
 **Run:**
 ```bash
@@ -97,20 +100,22 @@ maestro test .maestro/flows/auth/sign-in.yaml -e APP_ID=com.ios.diki.sharingsess
 Tests the complete registration flow with email verification.
 
 **Test Data:**
-- First Name: `John`
-- Last Name: `Doe`
-- Username: `johndoe`
-- Email: `johndoe+clerk_test@example.com`
-- Password: `JohndoePassword123!`
+- Loaded from `credentials.js` JavaScript helper
+- First Name: `Test`
+- Last Name: `User`
+- Username: `testuser{timestamp}` (unique per run)
+- Email: `test+clerk_test@example.com`
+- Password: `TestPassword123!`
 - Verification Code: `424242` (Clerk test code)
 
 **Steps:**
-1. Launch app
-2. Navigate to sign-up screen
-3. Fill in all registration fields
-4. Submit form
-5. Enter verification code
-6. Verify account creation and auto sign-in
+1. Load test credentials from JavaScript
+2. Launch app
+3. Navigate to sign-up screen
+4. Fill in all registration fields from script output
+5. Submit form
+6. Enter verification code from script
+7. Verify account creation and auto sign-in
 
 **Run:**
 ```bash
@@ -172,6 +177,43 @@ maestro test .maestro/flows/todos/create-todo.yaml -e APP_ID=com.ios.diki.sharin
 
 ## 🧪 Test Data
 
+### JavaScript Credentials Helper
+
+All auth tests use a centralized JavaScript helper for managing test credentials.
+
+**File:** `.maestro/flows/auth/credentials.js`
+
+**Usage in YAML:**
+```yaml
+# Load credentials at the beginning of your flow
+- runScript: credentials.js
+
+# Use credentials in your test
+- inputText: ${output.TEST_EMAIL}          # test+clerk_test@example.com
+- inputText: ${output.TEST_PASSWORD}        # TestPassword123!
+- inputText: ${output.TEST_FIRST_NAME}      # Test
+- inputText: ${output.TEST_LAST_NAME}       # User
+- inputText: ${output.TEST_USERNAME}        # testuser{timestamp}
+- inputText: ${output.VERIFICATION_CODE}    # 424242
+```
+
+**Available Output Variables:**
+
+| Variable | Value | Description |
+|----------|-------|-------------|
+| `${output.TEST_EMAIL}` | `test+clerk_test@example.com` | Clerk test email |
+| `${output.TEST_PASSWORD}` | `TestPassword123!` | Test password |
+| `${output.TEST_FIRST_NAME}` | `Test` | First name |
+| `${output.TEST_LAST_NAME}` | `User` | Last name |
+| `${output.TEST_USERNAME}` | `testuser{timestamp}` | Unique username |
+| `${output.VERIFICATION_CODE}` | `424242` | Clerk test code |
+
+**Benefits:**
+- ✅ Centralized credential management
+- ✅ Easy to update in one place
+- ✅ Supports unique test data (via timestamp)
+- ✅ Consistent across all auth flows
+
 ### Clerk Test Credentials
 
 The app uses Clerk's test mode which bypasses email/SMS delivery:
@@ -183,8 +225,8 @@ The app uses Clerk's test mode which bypasses email/SMS delivery:
 
 **Examples:**
 - `test+clerk_test@example.com`
-- `johndoe+clerk_test@example.com`
-- `user+clerk_test@example.com`
+- `user123+clerk_test@example.com`
+- `{username}+clerk_test@example.com`
 
 ### Todo Icons
 
@@ -323,7 +365,7 @@ tags:
 # Sign in if not authenticated
 - runFlow:
     when:
-      visible: "Sign in to .*"
+      visible: "SignIn to .*"
     file: ../auth/sign-in.yaml
 
 # Navigate to Active tab

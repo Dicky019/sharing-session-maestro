@@ -531,3 +531,10 @@ When adding testIDs for Maestro tests:
 - **User Isolation**: All todos are scoped to the authenticated user via Clerk JWT
 - **Date/Time Handling**: All dates stored as ISO 8601 strings in Convex
 - **Icon Library**: Uses lucide-react-native with 27 predefined icons for todos
+
+## Recent Changes
+- 001-todo-list-status: Added TypeScript 5.9.2 (strict mode), Node.js (via Expo SDK 54)
+- 001-todo-list-status: Added TypeScript 5.9.2 (strict mode), Node.js (via Expo SDK 54)
+- 001-todo-list-status: Added [if applicable, e.g., PostgreSQL, CoreData, files or N/A]
+
+## Active Technologies

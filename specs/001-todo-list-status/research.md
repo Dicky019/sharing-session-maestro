@@ -1,8 +1,10 @@
 # Research: Todo List Technology Decisions
 
 **Feature**: Todo List with Status Management
-**Date**: 2025-10-26
+**Date**: 2025-10-26 (Updated: 2025-10-29)
 **Purpose**: Resolve technical unknowns and document technology choices
+
+> **Update Note (2025-10-29)**: Updated Section 5 (Form State Management) to reflect constitutional requirement for React Hook Form + Zod v4 (Principle VIII). Added Section 6 (Error Handling) documenting Sonner Native usage. Updated dependencies status to confirm all packages are pre-installed.
 
 ## 1. Backend: Convex for Real-Time Data Sync
 
@@ -268,70 +270,182 @@ export function IconPicker({ selected, onSelect }) {
 
 ## 5. Form State Management
 
-### Decision: React useState with Validation Helper
+### Decision: React Hook Form + Zod v4 (Constitutional Requirement)
 
 **Chosen Approach**:
-- Local component state using React `useState`
-- Custom `useTodoForm` hook for form logic
-- Validation on submit (not on change for better UX)
-- Error state managed separately per field
-- Optimistic UI updates (submit first, then API)
+- React Hook Form for performant form state management
+- Zod v4 for schema-based validation with TypeScript inference
+- `zodResolver` from `@hookform/resolvers/zod` for integration
+- `Controller` component for React Native input wrapping
+- Real-time validation feedback on field changes
+- Inline error message display
 
 **Implementation Pattern**:
 ```typescript
 // components/todo/todo-form.tsx
-function useTodoForm(initialData?) {
-  const [title, setTitle] = useState(initialData?.title || '');
-  const [description, setDescription] = useState(initialData?.description || '');
-  const [icon, setIcon] = useState(initialData?.icon || 'CheckSquare');
-  const [dueDate, setDueDate] = useState(initialData?.dueDate || new Date());
-  const [errors, setErrors] = useState({});
+import { zodResolver } from '@hookform/resolvers/zod';
+import { Controller, useForm } from 'react-hook-form';
+import { z } from 'zod';
 
-  const validate = () => {
-    const newErrors = {};
-    if (!title.trim()) newErrors.title = 'Title is required';
-    if (title.length > 100) newErrors.title = 'Title too long';
-    return newErrors;
-  };
+const todoFormSchema = z.object({
+  title: z
+    .string()
+    .trim()
+    .min(1, 'Title is required')
+    .max(100, 'Title must be 100 characters or less'),
+  description: z.string().max(500, 'Description must be 500 characters or less'),
+  icon: z.string().min(1, 'Please select an icon'),
+  dueDate: z.date().min(1, 'Due date is required'),
+});
 
-  const handleSubmit = async () => {
-    const validationErrors = validate();
-    if (Object.keys(validationErrors).length > 0) {
-      setErrors(validationErrors);
-      return false;
-    }
-    // API submission logic
-    return true;
-  };
+type TodoFormData = z.infer<typeof todoFormSchema>;
 
-  return { title, setTitle, description, setDescription, icon, setIcon, dueDate, setDueDate, errors, handleSubmit };
+export function TodoForm({ onSubmit, initialData }: TodoFormProps) {
+  const {
+    control,
+    handleSubmit,
+    formState: { errors, isSubmitting },
+  } = useForm<TodoFormData>({
+    resolver: zodResolver(todoFormSchema),
+    defaultValues: {
+      title: initialData?.title || '',
+      description: initialData?.description || '',
+      icon: initialData?.icon || '',
+      dueDate: initialData?.dueDate || new Date(),
+    },
+  });
+
+  return (
+    <Controller
+      control={control}
+      name="title"
+      render={({ field: { onChange, onBlur, value } }) => (
+        <Input
+          value={value}
+          onChangeText={onChange}
+          onBlur={onBlur}
+          placeholder="Enter todo title"
+        />
+      )}
+    />
+  );
 }
 ```
 
 **Rationale**:
-- Simple state management for form-only data
-- No need for global state (todos fetched from API)
-- Validation-on-submit provides better UX than validation-on-change
-- Custom hook makes logic reusable and testable
+- **Constitutional Mandate**: Principle VIII requires React Hook Form + Zod v4 for all forms
+- **Type Safety**: Zod schemas provide runtime validation with full TypeScript inference
+- **Performance**: React Hook Form minimizes re-renders compared to useState approaches
+- **Developer Experience**: No manual validation logic, error handling built-in
+- **Consistency**: All forms across the app use the same validation pattern
+- **Maintainability**: Schema-based validation is easier to modify and extend
 
 **Alternatives Considered**:
-- ❌ **React Hook Form**: Overkill for 4 fields
-- ❌ **Formik**: Heavy dependency for simple form
-- ❌ **Zustand/Redux**: Global state not needed for form
+- ❌ **React useState + Manual Validation**: Violates constitution, more boilerplate, error-prone
+- ❌ **Formik**: Not specified in constitution, heavier than React Hook Form
+- ✅ **React Hook Form + Zod v4**: Constitutional requirement, optimal solution
 
 **Validation Rules**:
-- Title: Required, 1-100 characters
-- Description: Optional, max 500 characters
-- Icon: Required (default provided)
-- Due Date: Optional, must be future date (warning only)
+- Title: Required, 1-100 characters (trimmed)
+- Description: Required, max 500 characters
+- Icon: Required (must be from TODO_ICON_OPTIONS)
+- Due Date: Required, must be valid date
+
+**Dependencies Required**:
+```json
+{
+  "react-hook-form": "^7.65.0",
+  "@hookform/resolvers": "^5.2.2",
+  "zod": "^4.1.12"
+}
+```
 
 **References**:
-- [React useState Hook](https://react.dev/reference/react/useState)
-- [Custom Hooks](https://react.dev/learn/reusing-logic-with-custom-hooks)
+- [React Hook Form Documentation](https://react-hook-form.com/)
+- [Zod v4 Documentation](https://zod.dev/)
+- [Constitution Principle VIII](../.specify/memory/constitution.md#viii-standardized-form-validation-react-hook-form--zod-v4)
 
 ---
 
-## 6. Data Initialization & Sample Data
+## 6. Error Handling & Toast Notifications
+
+### Decision: Sonner Native (Already Installed)
+
+**Chosen Approach**:
+- Sonner Native for cross-platform toast notifications
+- Error toasts for API failures (create/update/delete operations)
+- Non-blocking notifications at bottom-center with close button
+- Preserve user input in forms after errors (no data loss)
+- Provide retry mechanisms for failed operations
+
+**Implementation Pattern**:
+```typescript
+import { toast } from 'sonner-native';
+
+// In todo form component
+async function handleCreateTodo(data: TodoFormData) {
+  try {
+    await createTodo({
+      title: data.title,
+      description: data.description,
+      icon: data.icon,
+      dueDate: data.dueDate.toISOString(),
+    });
+    toast.success('Todo created successfully!');
+    router.back();
+  } catch (error) {
+    toast.error('Failed to create todo. Please try again.', {
+      description: error instanceof Error ? error.message : 'Unknown error',
+      action: {
+        label: 'Retry',
+        onClick: () => handleCreateTodo(data),
+      },
+    });
+    // Form data is preserved automatically by React Hook Form
+  }
+}
+```
+
+**Rationale**:
+- **Already Installed**: Sonner Native (v0.21.1) is in package.json, no new dependency needed
+- **Cross-Platform**: Works consistently on iOS, Android, and Web
+- **User-Friendly**: Non-blocking toasts don't interrupt user workflow
+- **Accessibility**: Supports screen readers and keyboard navigation
+- **Customizable**: Supports actions (retry buttons), descriptions, and variants
+- **Configuration**: Already configured at bottom-center with close button (per CLAUDE.md)
+
+**Alternatives Considered**:
+- ❌ **React Native Toast Message**: Additional dependency, similar functionality
+- ❌ **Custom Modal**: Blocking UI, worse UX than toasts
+- ❌ **Alert API**: Platform-inconsistent, blocks user interaction
+- ✅ **Sonner Native**: Already installed, optimal UX
+
+**Error Handling Strategy**:
+- **API Failures**: Show error toast with retry button, preserve form data
+- **Network Failures**: Same handling as API failures
+- **Validation Errors**: Inline form validation (React Hook Form), no toast needed
+- **Success Feedback**: Success toast on create/update/delete operations
+- **Loading States**: Button disabled with loading text during async operations
+
+**Toast Types**:
+- `toast.success()` - Todo created/updated/deleted successfully
+- `toast.error()` - API/network failures with retry action
+- `toast.info()` - Informational messages (optional)
+
+**Implementation Notes**:
+- Toasts appear at bottom-center (configured in app layout)
+- Close button available on all toasts
+- Toasts auto-dismiss after timeout (configurable)
+- Multiple toasts stack vertically
+- No need to manually clear toasts (auto-managed)
+
+**References**:
+- [Sonner Native Documentation](https://gqty.dev/sonner-native)
+- [Toast Notification Best Practices](https://www.nngroup.com/articles/toast-notification/)
+
+---
+
+## 7. Data Initialization & Sample Data
 
 ### Decision: Convex Functions with Seeding Logic
 
@@ -405,7 +519,8 @@ export const initializeSampleData = mutation({
 | **Navigation** | Expo Router Tabs | File-based, cross-platform, intuitive |
 | **DateTime Picker** | @react-native-community/datetimepicker | Platform-native, official package |
 | **Icons** | lucide-react-native | Already installed, large selection |
-| **Form State** | React useState + custom hook | Simple, no extra dependencies |
+| **Form State** | React Hook Form + Zod v4 | Constitutional requirement, type-safe validation |
+| **Error Handling** | Sonner Native | Already installed, cross-platform toasts |
 | **Data Fetching** | useQuery, useMutation (Convex hooks) | Real-time reactivity, optimistic updates |
 | **UI Components** | React Native Reusables + NativeWind | Existing project standards |
 | **Type Safety** | TypeScript strict mode | Project requirement |
@@ -413,17 +528,21 @@ export const initializeSampleData = mutation({
 
 ---
 
-## New Dependencies Required
+## Dependencies Status
 
-```bash
-# Convex backend (database + real-time sync)
-npm install convex
+All required dependencies are already installed in the project:
 
-# DateTime picker
-npx expo install @react-native-community/datetimepicker
-```
+**Already Installed**:
+- ✅ `convex` (^1.28.0) - Backend database + real-time sync
+- ✅ `@react-native-community/datetimepicker` (8.4.4) - Platform-native datetime picker
+- ✅ `react-hook-form` (^7.65.0) - Form state management
+- ✅ `@hookform/resolvers` (^5.2.2) - Zod integration for React Hook Form
+- ✅ `zod` (^4.1.12) - Schema-based validation
+- ✅ `sonner-native` (^0.21.1) - Toast notifications for error handling
+- ✅ `lucide-react-native` (^0.545.0) - Icon library
+- ✅ `expo-router` (^6.0.10) - File-based routing with tabs
 
-All other technologies leverage existing project dependencies.
+**No additional dependencies required** - all technologies leverage existing project packages.
 
 ---
 

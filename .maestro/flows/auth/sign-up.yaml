@@ -12,61 +12,77 @@ tags:
 # - Using Clerk test email format for automatic verification
 #
 # Test Steps:
-# 1. Launch app
-# 2. Navigate to sign-up screen
-# 3. Fill in first name (John)
-# 4. Fill in last name (Doe)
-# 5. Fill in username (johndoe) and copy for later verification
-# 6. Fill in email (johndoe+clerk_test@example.com)
-# 7. Fill in password (JohndoePassword123!)
-# 8. Submit registration form
-# 9. Enter verification code (424242 for test emails)
-# 10. Complete sign-up process
-# 11. Verify user is logged in and redirected to home
+# 1. Load test credentials from JavaScript helper
+# 2. Launch app
+# 3. Navigate to sign-up screen
+# 4. Fill in first name from credentials
+# 5. Fill in last name from credentials
+# 6. Fill in username from credentials and copy for later verification
+# 7. Fill in email from credentials (Clerk test format)
+# 8. Fill in password from credentials
+# 9. Submit registration form
+# 10. Enter verification code from credentials (424242 for test emails)
+# 11. Complete sign-up process
+# 12. Verify user is logged in and redirected to home
 #
 # Expected Result:
 # - Account is created successfully
 # - Email verification completes with test code
 # - User is signed in automatically
 # - User menu shows with correct username
+#
+# Test Data:
+# - All credentials loaded from credentials.js
+# - Email: test+clerk_test@example.com (Clerk test format)
+# - Verification Code: 424242 (Clerk test code)
+
+# Load test sign-up
+- runScript: js/sign-up.js
 
 - launchApp
+
+# Sign out first if already logged in
+- runFlow:
+    when:
+      visible:
+        id: "user-menu-.*"
+    file: ../common/popover-sign-out.yaml
 
 # Navigate to sign-up screen
 - tapOn: "Sign up"
 
-# Fill in first name
+# Fill in first name (from JavaScript credentials)
 - tapOn:
     id: "first-name"
-- inputText: "John"
+- inputText: ${output.TEST_FIRST_NAME}
 
-# Fill in last name
+# Fill in last name (from JavaScript credentials)
 - tapOn:
     id: "last-name"
-- inputText: "Doe"
+- inputText: ${output.TEST_LAST_NAME}
 
-# Fill in username and copy it for later assertion
+# Fill in username and copy it for later assertion (from JavaScript credentials)
 - tapOn:
     id: "username"
-- inputText: "johndoe"
+- inputText: ${output.TEST_USERNAME}
 - copyTextFrom:
     id: "username"
 
-# Fill in email (using Clerk test format)
+# Fill in email (from JavaScript credentials - using Clerk test format)
 - tapOn: "m@example.com"
-- inputText: "johndoe+clerk_test@example.com"
+- inputText: ${output.TEST_EMAIL}
 
-# Fill in password and proceed to verification
+# Fill in password and proceed to verification (from JavaScript credentials)
 - tapOn: "next"
-- inputText: "JohndoePassword123!"
+- inputText: ${output.TEST_PASSWORD}
 
 # Submit form to trigger email verification
 - tapOn: "send"
 
-# Enter verification code (424242 is the test code for Clerk)
+# Enter verification code (from JavaScript credentials - 424242 is the test code for Clerk)
 - tapOn:
     id: "code"
-- inputText: "424242"
+- inputText: ${output.VERIFICATION_CODE}
 
 # Submit verification code
 - tapOn:
