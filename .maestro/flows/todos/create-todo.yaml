@@ -44,7 +44,7 @@ tags:
 
 # Ensure we're on Active tab
 - tapOn:
-    id: "active"
+    id: "acti"
 
 # Open create todo form (via FAB or header button)
 - tapOn: "Create new todo"
@@ -71,16 +71,15 @@ tags:
 # Calculate tomorrow's date and target time using JavaScript helper
 - runScript: calculate-datetime.js
 
-# Open date picker
-- tapOn:
-    id: todo-due-date
+- runFlow:
+    when:
+      true: ${maestro.platform == 'android'}
+    file: date-picker/android-date-picker.yaml
 
-# Select tomorrow's date (calculated by script)
-- tapOn: ${output.TOMORROW_DAY}
-
-# Close date picker by tapping outside or confirm button
-- tapOn:
-    point: 50%,20%
+- runFlow:
+    when:
+      true: ${maestro.platform == 'ios'}
+    file: date-picker/ios-date-picker.yaml
 
 # Submit the form
 - tapOn:

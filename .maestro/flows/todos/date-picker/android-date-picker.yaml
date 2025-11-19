@@ -1,0 +1,14 @@
+appId: ${APP_ID}
+tags:
+  - util
+---
+
+- tapOn:
+    id: todo-due-date-picker
+- tapOn:
+    id: android:id/next # next month
+- tapOn: "1"
+- tapOn:
+    id: android:id/button1 # ok
+- tapOn:
+    id: android:id/button1 # ok

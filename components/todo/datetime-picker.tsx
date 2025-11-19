@@ -2,14 +2,16 @@
  * DateTime Picker Component
  *
  * Platform-specific date/time picker:
- * - iOS/Android: Native picker from @react-native-community/datetimepicker
+ * - iOS: Button with Popover containing inline picker
+ * - Android: Button that shows native modal DateTimePicker
  * - Web: HTML5 datetime-local input
  */
 
 import DateTimePicker, { type DateTimePickerEvent } from '@react-native-community/datetimepicker';
 import { Calendar } from 'lucide-react-native';
 import { useColorScheme } from 'nativewind';
-import { Platform, TextInput, View } from 'react-native';
+import { useState } from 'react';
+import { Platform, Pressable, TextInput, View } from 'react-native';
 import { Label } from '@/components/ui/label';
 import { Text } from '@/components/ui/text';
 
@@ -30,11 +32,44 @@ export function TodoDateTimePicker({
 }: DateTimePickerProps) {
   const { colorScheme } = useColorScheme();
   const iconColor = colorScheme === 'dark' ? '#ffffff' : '#000000';
+  const [showAndroidPicker, setShowAndroidPicker] = useState(false);
+  const [showAndroidTimePicker, setShowAndroidTimePicker] = useState(false);
+
+  // Format date for display
+  const formatDateTime = (date: Date) => {
+    return date.toLocaleString('en-US', {
+      month: 'short',
+      day: 'numeric',
+      year: 'numeric',
+      hour: 'numeric',
+      minute: '2-digit',
+      hour12: true,
+    });
+  };
 
   // Handle native picker change (iOS/Android)
   const handleNativeChange = (_event: DateTimePickerEvent, selectedDate?: Date) => {
-    if (selectedDate) {
+    if (Platform.OS === 'android') {
+      setShowAndroidPicker(false);
+      if (_event.type === 'set' && selectedDate) {
+        // After date is selected, show time picker
+        onChange(selectedDate);
+        setShowAndroidTimePicker(true);
+      }
+    } else if (selectedDate) {
       onChange(selectedDate);
+    }
+  };
+
+  // Handle time picker change (Android only)
+  const handleTimeChange = (_event: DateTimePickerEvent, selectedTime?: Date) => {
+    setShowAndroidTimePicker(false);
+    if (_event.type === 'set' && selectedTime) {
+      // Combine the current date with the selected time
+      const combined = new Date(value);
+      combined.setHours(selectedTime.getHours());
+      combined.setMinutes(selectedTime.getMinutes());
+      onChange(combined);
     }
   };
 
@@ -64,7 +99,46 @@ export function TodoDateTimePicker({
     );
   }
 
-  // Native (iOS/Android) implementation
+  // Android implementation - modal DateTimePicker
+  if (Platform.OS === 'android') {
+    return (
+      <View className="gap-2">
+        <Label nativeID={testID}>{label}</Label>
+        <Pressable
+          testID={testID}
+          onPress={() => setShowAndroidPicker(true)}
+          className={`h-12 flex-row items-center gap-2 rounded-md border px-4 ${error ? 'border-destructive' : 'border-input'} bg-background`}>
+          <Calendar size={20} color={iconColor} />
+          <Text className="flex-1 text-foreground">{formatDateTime(value)}</Text>
+        </Pressable>
+
+        {showAndroidPicker && (
+          <DateTimePicker
+            testID="android-date-picker"
+            value={value}
+            mode="date"
+            display="default"
+            onChange={handleNativeChange}
+            minimumDate={new Date()}
+          />
+        )}
+
+        {showAndroidTimePicker && (
+          <DateTimePicker
+            testID="android-time-picker"
+            value={value}
+            mode="time"
+            display="default"
+            onChange={handleTimeChange}
+          />
+        )}
+
+        {error && <Text className="text-destructive text-xs">{error}</Text>}
+      </View>
+    );
+  }
+
+  // iOS implementation - Popover with inline picker
   return (
     <View className="gap-2">
       <Label nativeID={testID}>{label}</Label>
@@ -74,7 +148,7 @@ export function TodoDateTimePicker({
         className={`h-12 flex-row items-center gap-2 rounded-md border border-input px-4 ${error ? 'border-destructive' : 'border-input'}bg-background`}>
         <Calendar size={20} color={iconColor} />
         <DateTimePicker
-          testID="todo-due-date"
+          testID="todo-ios-due-date"
           value={value}
           mode="date"
           display="default"

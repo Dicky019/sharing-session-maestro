@@ -269,7 +269,7 @@ testID="inactive"         // Tab selector
 testID="complete"         // Tab selector
 testID="todo-icon-{IconName}"  // e.g., "todo-icon-ShoppingCart"
 testID="create-todo-submit"
-testID="todo-due-date"
+testID="todo-ios-due-date"
 ```
 
 ## 🔧 Helper Scripts

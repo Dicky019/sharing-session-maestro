@@ -9,5 +9,17 @@ tags:
     delay: 300
 
 # Tap sign-out button
-- tapOn:
-    point: 35%,25%
+
+- runFlow:
+    when:
+      true: ${maestro.platform == 'android'}
+    commands: 
+        - tapOn:
+            point: 50%,22%
+
+- runFlow:
+    when:
+      true: ${maestro.platform == 'ios'}
+    commands: 
+        - tapOn:
+            point: 35%,25%

@@ -10,7 +10,7 @@
 import { Tabs, useRouter } from 'expo-router';
 import { CheckCircle, ListTodo, Plus, XCircle } from 'lucide-react-native';
 import { useColorScheme } from 'nativewind';
-import { Pressable, View } from 'react-native';
+import { Platform, Pressable, View } from 'react-native';
 import { UserMenu } from '@/components/user-menu';
 
 export default function TabLayout() {
@@ -20,8 +20,9 @@ export default function TabLayout() {
 
   // Header left: Theme toggle and user menu
   const HeaderLeft = () => (
-    <View className="ml-4">
+    <View className="ml-4 flex-row gap-2 justify-center items-center">
       <UserMenu />
+      {Platform.OS === 'android' ? <HeaderRight /> : null}
     </View>
   );
 
@@ -42,8 +43,8 @@ export default function TabLayout() {
       screenOptions={{
         tabBarActiveTintColor: iconColor,
         headerShown: true,
-        headerLeft: () => <HeaderLeft />,
-        headerRight: () => <HeaderRight />,
+        headerLeft: Platform.OS === 'ios' ? () => <HeaderLeft /> : undefined,
+        headerRight: () => (Platform.OS === 'ios' ? <HeaderRight /> : <HeaderLeft />),
       }}>
       <Tabs.Screen
         name="active"

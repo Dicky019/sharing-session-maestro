@@ -1,0 +1,15 @@
+appId: ${APP_ID}
+tags:
+  - util
+---
+
+# Open date picker
+- tapOn:
+    id: todo-ios-due-date
+
+# Select tomorrow's date (calculated by script)
+- tapOn: ${output.TOMORROW_DAY}
+
+# Close date picker by tapping outside or confirm button
+- tapOn:
+    point: 50%,20%
